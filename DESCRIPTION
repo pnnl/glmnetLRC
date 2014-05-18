@@ -1,0 +1,16 @@
+Package: glmnetLRC
+Type: Package
+Title: glmnetLRC: Elastic net logistic regression classification (LRC)
+Version: 0.1.0
+Date: 2014-05-05
+Author: Landon Sego, Alexander Venzin
+Maintainer: Landon Sego <Landon.Sego@pnnl.gov>
+Description: Methods for fitting and predicting elastic net logistic regression
+    classifiers (LRC) with an arbitrary loss function
+License: file LICENSE
+Depends:
+    glmnet,
+    plyr,
+    parallel
+Roxygen: list(wrap = FALSE)
+Packaged: 2014-04-15 00:29:16 UTC; venz586
