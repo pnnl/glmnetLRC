@@ -8,9 +8,9 @@
 ## Then the probability returned by \code{predict(glmnetFit, newData, type = 'response')}
 ## is the probability that the observations belong to class z.  If this probabilty
 ## exceeds \code{tau}, we will classify the observation as belonging to \code{z}.
-## 
+##
 ## @author Landon Sego
-## 
+##
 ## @param glmnetFit The glmnet fitted object (returned from \code{glmnet}
 ## that inherits from the \code{lognet} and \code{glmnet} classes.
 ##
@@ -24,7 +24,7 @@
 ## \code{lossMatrix}
 ##
 ## @param tauVec A numeric sequence of threshold values for the binary
-## classification. 
+## classification.
 ##
 ## @param weight A numeric vector indicating the relative weight to ascribe
 ## to each row of \code{newData}
@@ -47,24 +47,24 @@
 # What happens if column names are not provided in newdata?
 ################################################################################
 
-predLossLRC <- function(glmnetFit, newData, truthLabels, lossMat,
-                         tauVec = seq(0.1, 0.9, by = 0.1),
-                         weight = rep(1, NROW(newData))) {
+predLoss_glmnetLRC <- function(glmnetFit, newData, truthLabels, lossMat,
+                               tauVec = seq(0.1, 0.9, by = 0.1),
+                               weight = rep(1, NROW(newData))) {
 
   # Check inputs
   stopifnot(inherits(glmnetFit, "lognet"),
             inherits(glmnetFit, "glmnet"),
-            
+
             is.factor(truthLabels),
-            
+
             # Ensure we have a binary response
             length(levels(truthLabels)) == 2,
-            
+
             # Ensure factors were constructed the same way for
             # the training data and the newdata.  This is important
             # to ensure our labels don't get messed up
             all(glmnetFit$classnames == levels(truthLabels)),
-            
+
             is.numeric(tauVec),
 
             length(weight) == NROW(newData))
@@ -84,21 +84,21 @@ predLossLRC <- function(glmnetFit, newData, truthLabels, lossMat,
     # x is the probabilty returned by predict(glmnetFit, ...), i.e.,
     # it is P(x elem Z)
 
-    # Dichotomize the prediction for tau    
+    # Dichotomize the prediction for tau
     predLabels <- factor(x > tau, levels = c(FALSE, TRUE),
                          labels = glmnetFit$classnames)
 
     cl <- calcLoss(truthLabels, predLabels, lossMat, weight = weight)
 
     return(cl)
-    
+
   }
 
   # Calculate the loss over the taus
   calcLossOverTau <- function(x) {
 
     # x is a value of tau
-    
+
     out <- list2df(apply(preds, 2, calcLossOverLambda, tau = x))
     out$tau <- x
     out$lambda <- glmnetFit$lambda
@@ -111,5 +111,5 @@ predLossLRC <- function(glmnetFit, newData, truthLabels, lossMat,
   # (aggregated over the observations provided in 'newData') for
   # each combination of tau and lambda
   return(list2df(lapply(tauVec, calcLossOverTau)))
-  
+
 } # predLossLRC

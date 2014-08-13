@@ -1,17 +1,17 @@
 ## Train an elastic net logistic regression classifier for a single cross validation
-## partition.  A helper function for glmnetLRC()
+## run.  A helper function for LRCglmnet()
 
-glmnetLRCsingle <- function(truthLabels,
-                           predictors,
-                           lossMat,
-                           weight, 
-                           alphaVec,
-                           tauVec,
-                           cvFolds,
-                           seed,
-                           n,
-                           verbose){
-  
+single_LRCglmnet <- function(truthLabels,
+                             predictors,
+                             lossMat,
+                             weight,
+                             alphaVec,
+                             tauVec,
+                             cvFolds,
+                             seed,
+                             n,
+                             verbose){
+
   # Function to train and test over the CV folds
   trainTest <- function(testSet, a = 1, lambdaV = NULL) {
 
@@ -30,23 +30,23 @@ glmnetLRCsingle <- function(truthLabels,
                         lambda = lambdaV,
                         alpha = a)
 
-    # Now test it 
-    out <- predLossLRC(glmnetFit, predictors[testSet,], truthLabels[testSet],
-                       lossMat, tauVec = tauVec, weight = weight[testSet])
+    # Now test it
+    out <- predLoss_LRCglmnet(glmnetFit, predictors[testSet,], truthLabels[testSet],
+                              lossMat, tauVec = tauVec, weight = weight[testSet])
 
     return(out)
 
   } # trainTest
-  
+
   # Run the cross validation for a particular alpha
   cvForAlpha <- function(alpha, tFold) {
 
     # alpha is a scalar
     # tFold is list of training indexes--the output of parseJob()
-    
-    if (verbose) 
+
+    if (verbose)
       pvar(alpha)
-    
+
     # Get the lambdaVec for this particular alpha using all the data
     lambdaVec <- glmnet(predictors, truthLabels, weights = weight,
                         family = "binomial", alpha = alpha)$lambda
@@ -54,61 +54,60 @@ glmnetLRCsingle <- function(truthLabels,
     # Now train/test over all the cv folds
     testAll <- list2df(lapply(tFold, trainTest, a = alpha,
                               lambdaV = lambdaVec))
-      
-    
+
+
     # Add in the alpha
     testAll$alpha <- alpha
 
 
     return(testAll)
-    
+
   } # cvForAlpha
-  
+
   # Generate the test folds
   testFolds <- parseJob(n, cvFolds, random.seed = seed)
-    
+
   # Test/train over the vector of alphas
   completeTest <- list2df(lapply(alphaVec, function(x) cvForAlpha(x, testFolds)))
 
   # Now summarize the loss over the cv folds, with a loss value for each
   # alpha, lambda, and tau combination for a given seed
   dfData <- list2df(dlply(completeTest,
-                          
+
                           .variables = c('alpha', 'lambda','tau'),
-                          
+
                           .fun = function(x){
-                            
-                             # x = K x K data.frame of values for the K folds with 
+
+                             # x = K x K data.frame of values for the K folds with
                              # same (alpha, lambda, tau, seed) parameter values.
                              Eloss <- sum(x$weightedSumLoss) / sum(x$sumWeights)
-                            
+
                              return(list('ExpectedLoss' = Eloss,
-                                         'alpha' = unique(x$alpha), 
+                                         'alpha' = unique(x$alpha),
                                          'tau' = unique(x$tau),
                                          'lambda' = unique(x$lambda)))
                            }),
-                    
+
                      row.names = NULL)
-  
-  
+
+
   if (any(is.na(dfData)))
     warning("Unexpected NA values are present in the cross\n",
              "validation results for replicate seed = ", seed, "\n")
-  
+
 
   # Searching for the minimum by sorting. Smaller expected loss is preferred
   # In the event of a tie, smaller sqErrorTau is prferred (tau closer to 0.5)
   # If still tied, larger values of lambda are prefered because they reduce the
   # number of predictors to create a more parsimonous model with fewer predictors
   dfData$sqErrorTau <- (dfData$tau - 0.5)^2
-  gridMinimum <- sort.data.frame(dfData, ~ExpectedLoss + sqErrorTau - lambda)[1,]
+  gridMinimum <- sortDF(dfData, ~ExpectedLoss + sqErrorTau - lambda)[1,]
 
   # Add in the seed
   gridMinimum$seed <- seed
 
-
   # Return the optimal lambda, tau, and alpha for this particular seed
   return(gridMinimum[,c("seed", "alpha", "lambda", "tau", "ExpectedLoss")])
 
-} # glmnetLRCsingle
+} # single_LRCglmnet
 
