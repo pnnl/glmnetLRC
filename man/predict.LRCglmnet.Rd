@@ -35,6 +35,7 @@ Predict (or classify) new data using a fitted glmnet logistic regression classif
 Landon Sego
 }
 \seealso{
-See \code{\link{LRCglmnet}} for examples
+See \code{\link{LRCglmnet}} and \code{\link{LRCglmnet_fit}}
+for examples.  Also see \code{\link{summary.LRCpred}}.
 }
 

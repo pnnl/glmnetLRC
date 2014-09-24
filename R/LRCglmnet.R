@@ -143,7 +143,7 @@
 ##' # We'll load the precalculated model fit instead
 ##' \donttest{data(LRCglmnet_fit)}
 ##' \dontshow{
-##' # Here is a call to glmnetGLR that will run quickly for testing purposes
+##' # Here's a call to LRCglment() that will run quickly for testing purposes
 ##' ncores <- max(1, detectCores() - 1)
 ##' LRCglmnet_fit <- LRCglmnet(response, predictors, lM, cores = ncores,
 ##'                            alphaVec = c(1, 0.5), tauVec = c(0.3, 0.5, 0.7),

@@ -39,6 +39,7 @@ classifier
 Landon Sego
 }
 \seealso{
-See \code{\link{LRCbestsubsets}} for examples
+See \code{\link{LRCbestsubsets}} and \code{\link{LRCbestsubsets_fit}}
+for examples.  Also see \code{\link{summary.LRCpred}}.
 }
 

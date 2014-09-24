@@ -1,3 +1,0 @@
-# Helper function for LRCbestsubsets and LRCglmnet for creating the cluster
-# that will be used to parallelize the cross validation replicates
-

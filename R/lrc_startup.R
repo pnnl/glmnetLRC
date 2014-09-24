@@ -1,12 +1,7 @@
 .onAttach <- function(libname, pkgname) {
 
-  banner.text <- paste("\nWelcome to the glmnetLRC package, version ",
-                       packageDescription("glmnetLRC", fields="Version"),
-                       "\n\nThe package vignette can be found at ",
-                       path.package(package="glmnetLRC"), "/doc/glmnetLRC.pdf\n",
-                       "\n\nCommented source code can be found in ",
-                       path.package(package="glmnetLRC"), "/SourceCode",
-                       
+  banner.text <- paste("\n\nThe package vignette can be found at ",
+                       path.package(package="lrc"), "/doc/glmnetLRC.pdf\n",
                        sep="")
   
   citation.text <- paste("\nPlease cite the following reference:",
@@ -18,4 +13,3 @@
   packageStartupMessage(citation.text)
   
 }
-

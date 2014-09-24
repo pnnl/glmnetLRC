@@ -77,11 +77,6 @@ returned by \code{LRCbestsubsets},
 which contains the best subsets logistic regression model and the optimal threshold,
 \eqn{\tau}.}
 
-\item{LRCbestsubsets_object}{An object of class \code{LRCbestsubsets},
-returned by \code{LRCbestsubsets},
-which contains the best subsets logistic regression model and the optimal threshold,
-\eqn{\tau}.}
-
 \item{\dots}{Additional arguments to default S3 method \code{\link{symbols}}.}
 }
 \value{
@@ -154,6 +149,76 @@ are across the cross-validation replicates. Also plots the \code{glm} object usi
 \item \code{coef}: Calls the \code{\link{coef.glm}} method
 on the best subsets regression and returns the logistic regression coefficients
 }}
+\examples{
+# Load the Mojave data
+data(Mojave)
+str(Mojave)
+
+# Here we select the predictor variables (remove the location variables and the response)
+predictors <- Mojave[,-c(1,2,11)]
+
+# Create a vector for the response (presence/absence of cheat grass)
+cheat <- Mojave$cheatGrass
+
+# "0" is no cheatgrass observed and "1" is cheatgrass.  Note how "1" is the second level
+# of the factor. This second level is the level for which the summary methods calculate
+# the sensitivity. So the factor coding here is perfect, since we are most interested
+# in predicting the presence of cheatgrass with greatest sensitivity (power).
+levels(cheat)
+
+# Specify the loss matrix. In this example, we specify the penalty for missing
+# cheatgrass as 2, while the penalty for predicting it falsely is 1.
+lM <- lossMatrix(c("0","0","1","1"),
+                 c("0","1","0","1"),
+                 c(0,   1,  2,  0))
+print(lM)
+
+# Train the best subsets logistis regression classifier (in particular, identify
+# the optimal threshold, tau, that minimizes the loss).  As this takes some time,
+# we'll skip this step
+\dontrun{LRCbestsubsets_fit <- LRCbestsubsets(cheat, predictors, lM,
+                                              cvReps = 100, cvFolds = 5,
+                                              cores = max(1, detectCores() - 1))}
+
+
+# We'll load the precalculated model fit instead
+\donttest{data(LRCbestsubsets_fit)}
+
+\dontshow{
+# Here is a call to LRCbestsubsets() that will run quickly for testing purposes
+LRCbestsubsets_fit <- LRCglmnet((cheat, predictors, lM, cvReps = 3,
+                                 cvFolds = 3, cores = max(1, detectCores() - 1),
+                                 tauVec = c(0.4, 0.5)))
+}
+
+
+# Demonstrate the various methods for LRCbestsubsets() output
+# (print, summary, plot, coef)
+print(LRCbestsubsets_fit)
+
+# Assigning the output of print extracts the set of optimal taus that
+# were identified during the cross validation replicates
+o <- print(LRCbestsubsets_fit)
+o
+
+# Sumarize the best fit LRC
+summary(LRCbestsubsets_fit)
+
+# Plot the loss as a function of the optimal taus for each cross validation
+# replicate.  Also plot the bestsubsets logistic regression glm object.
+plot(LRCbestsubsets_fit)
+
+# Display the coefficients
+coef(LRCbestsubsets_fit)
+
+# Make predictions using final model on the training data
+out <- predict(LRCbestsubsets_fit, Mojave, truthCol = "cheatGrass")
+
+head(out)
+
+# Calculate the performance of predictions
+summary(out)
+}
 \author{
 Landon Sego
 }

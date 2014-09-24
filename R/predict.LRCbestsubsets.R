@@ -31,7 +31,8 @@
 ##'
 ##' @export
 ##' 
-##' @seealso See \code{\link{LRCbestsubsets}} for examples
+##' @seealso See \code{\link{LRCbestsubsets}} and \code{\link{LRCbestsubsets_fit}}
+##' for examples.  Also see \code{\link{summary.LRCpred}}.
 
 predict.LRCbestsubsets <- function(LRCbestsubsets_object,
                                    newdata,
@@ -70,13 +71,16 @@ predict.LRCbestsubsets <- function(LRCbestsubsets_object,
         paste(setdiff(predictorNames, colnames(newdata)), collapse = "', '"), "'\n")
 
   # Prepare newdata for prediction (select and order predictors)
-  nd <- newdata[,predictorNames]
+  # The 'as.data.frame' preserves the dataframe even if only one predictor is
+  # selected
+  nd <- as.data.frame(newdata[,predictorNames])
+  colnames(nd) <- predictorNames
 
   # Get the original glm LRCbestsubsets_object
-#  glmObject <- LRCbestsubsets_object[-which(names(LRCbestsubsets_object) %in%"optimalParms")]
+##   glmObject <- LRCbestsubsets_object[-which(names(LRCbestsubsets_object) %in%
+##                                             c("tau", "optimalTaus", "classnames"))]
   glmObject <- LRCbestsubsets_object
   class(glmObject) <- setdiff(class(LRCbestsubsets_object), "LRCbestsubsets")
-
 
   # Get the numeric (probability) predictions from predict.glm using the optimal lambda
   preds <- predict(glmObject, nd, type = "response")

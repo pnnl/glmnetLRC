@@ -10,8 +10,7 @@
 \code{\link{predict.LRCbestsubsets}} or \code{\link{predict.LRCglmnet}}.}
 }
 \value{
-\describe{
-
+\itemize{
 \item If \code{truthCol} was provided in the call to
 \code{\link{predict.LRCglmnet}} or \code{\link{predict.LRCbestsubsets}}, a
 \code{data.frame} is returned with the sensitivity, specificity, false negative rate,

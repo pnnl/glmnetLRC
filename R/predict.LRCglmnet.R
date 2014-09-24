@@ -30,7 +30,8 @@
 ##'
 ##' @export
 ##'
-##' @seealso See \code{\link{LRCglmnet}} for examples
+##' @seealso See \code{\link{LRCglmnet}} and \code{\link{LRCglmnet_fit}}
+##' for examples.  Also see \code{\link{summary.LRCpred}}.
 
 predict.LRCglmnet <- function(LRCglmnet_object,
                               newdata,
