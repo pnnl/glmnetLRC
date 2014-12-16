@@ -194,7 +194,6 @@ LRCbestsubsets <- function(truthLabels, predictors, lossMat,
                            cluster = NULL,
                            verbose = FALSE,
                            ...) {
-
   
   # Checks on inputs
   stopifnot(is.factor(truthLabels),
@@ -254,25 +253,7 @@ LRCbestsubsets <- function(truthLabels, predictors, lossMat,
   # Create the weight column
   weight <- d$weight
 
-  ################################################################################
-  # Set up the cluster
-  ################################################################################
-  
-  cl <- createCluster(cvReps, masterSeed, cluster, cores)
-  
-  # Load the glmnetLRC package on the worker nodes
-  clusterEvalQ(cl$cluster, require(glmnetLRC))
 
-  # Export the required objects to the##  worker nodes
-  clusterExport(cl$cluster,
-                c("dm",
-                  "tauVec",
-                  "n",
-                  "cvFolds",
-                  "lossMat",
-                  "verbose"),
-                envir = environment())
-  
   # A wrapper function for calling single_LRCbestsubsets via parLapply
   trainWrapper <- function(seed) {
 
@@ -288,19 +269,56 @@ LRCbestsubsets <- function(truthLabels, predictors, lossMat,
 
   } # trainWrapper
 
-  # Excecute the training in parallel
-  parmEstimates <- list2df(parLapply(cl$cluster, cl$seedVec, trainWrapper),
-                           row.names = 1:cvReps)
+  # Get the vector of seeds that will ensure repeatability across threads
+  seedVec <- createSeeds(masterSeed, cvReps)
 
-  # Now stop the cluster
-  stopCluster(cl$cluster)
+  ################################################################################
+  # Set up the cluster and run CV in parallel
+  ################################################################################
+  
+  if (cores > 1) {
+  
+    cl <- createCluster(cvReps, cluster, cores)
+    
+    # Load the glmnetLRC package on the worker nodes
+    parallel::clusterEvalQ(cl, require(glmnetLRC))
+  
+    # Export the required objects to the##  worker nodes
+    parallel::clusterExport(cl,
+                            c("dm",
+                              "tauVec",
+                              "n",
+                              "cvFolds",
+                              "lossMat",
+                              "verbose"),
+                            envir = environment())
+    
+    # Excecute the training in parallel
+    parmEstimates <- Smisc::list2df(parallel::parLapply(cl, seedVec, trainWrapper),
+                                    row.names = 1:cvReps)
+  
+    # Now stop the cluster
+    stopCluster(cl)
+  
+  }
+
+  ################################################################################
+  # Single thread
+  ################################################################################
+  
+  else {
+
+    parmEstimates <- Smisc::list2df(lapply(seedVec, trainWrapper),
+                                    row.names = 1:cvReps)
+
+  }
 
   ################################################################################
   # Create the final model using the median tau value
   ################################################################################
 
   # Fit the model using the aggregate parameters
-  bestsubsetsFinal <- bestglm(dm, weights = weight, family = binomial, ...)$BestModel
+  bestsubsetsFinal <- bestglm::bestglm(dm, weights = weight, family = binomial, ...)$BestModel
                          
   # Return the optimal parameters to make graphical output
   bestsubsetsFinal$tau <- median(parmEstimates$tau)

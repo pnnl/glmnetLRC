@@ -45,7 +45,7 @@ single_LRCglmnet <- function(truthLabels,
     # tFold is list of training indexes--the output of parseJob()
 
     if (verbose)
-      pvar(alpha)
+      Smisc::pvar(alpha)
 
     # Get the lambdaVec for this particular alpha using all the data
     lambdaVec <- glmnet(predictors, truthLabels, weights = weight,

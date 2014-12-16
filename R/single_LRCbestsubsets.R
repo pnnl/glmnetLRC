@@ -22,8 +22,8 @@ single_LRCbestsubsets <- function(Xy,
     trainSet <- sort(setdiff(1:n, testSet))
 
     # Train the best subsets logistic regression
-    bestSub <- bestglm(Xy[trainSet,], weights = weight[trainSet],
-                       family = binomial, ...)$BestModel
+    bestSub <- bestglm::bestglm(Xy[trainSet,], weights = weight[trainSet],
+                                family = binomial, ...)$BestModel
 
 ##     bestPred <- rownames(print(bestSub))[-1]
 
@@ -48,10 +48,10 @@ single_LRCbestsubsets <- function(Xy,
 
 
   # Generate the test folds
-  testFolds <- parseJob(n, cvFolds, random.seed = seed)
+  testFolds <- Smisc::parseJob(n, cvFolds, random.seed = seed)
 
   # Test/train over over the folds
-  completeTest <- list2df(lapply(testFolds, trainTest))
+  completeTest <- Smisc::list2df(lapply(testFolds, trainTest))
 
   # Now summarize the loss over the cv folds, with a loss value for each
   # tau combination for a given seed
