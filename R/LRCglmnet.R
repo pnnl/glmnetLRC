@@ -226,27 +226,6 @@ LRCglmnet <- function(truthLabels, predictors, lossMat,
   if (verbose)
     cat(n, "observations are available for fitting the LRCglmnet model\n")
 
-  ################################################################################
-  # Set up cluster
-  ################################################################################
-
-  cl <- createCluster(cvReps, masterSeed, cluster, cores)
-  
-
-  # Load the glmnetLRC package on the worker nodes
-  clusterEvalQ(cl$cluster, require(glmnetLRC))
-
-  # Export the required objects to the worker nodes
-  clusterExport(cl$cluster,
-                c("d",
-                  "alphaVec",
-                  "tauVec",
-                  "n",
-                  "cvFolds",
-                  "lossMat",
-                  "verbose"),
-                envir = environment())
-
   # A wrapper function for calling single_LRCglmnet via parLapply
   trainWrapper <- function(seed) {
 
@@ -263,13 +242,52 @@ LRCglmnet <- function(truthLabels, predictors, lossMat,
 
   } # trainWrapper
 
+  # Get the vector of seeds that will ensure repeatability across threads
+  seedVec <- createSeeds(masterSeed, cvReps)
+  
+  ################################################################################
+  # Set up cluster
+  ################################################################################
+  if (cores > 1) {
+  
+    cl <- createCluster(cvReps, cluster, cores)
+  
+    # Load the glmnetLRC package on the worker nodes
+    parallel::clusterEvalQ(cl, library(lrc))
+  
+    
+    # Export the required objects to the worker nodes
+    parallel::clusterExport(cl,
+                            c("d",
+                              "alphaVec",
+                              "tauVec",
+                              "n",
+                              "cvFolds",
+                              "lossMat",
+                              "verbose"),
+                            envir = environment())
+  
+  
+    # Execute the training in parallel
+    parmEstimates <- Smisc::list2df(parallel::parLapply(cl, seedVec, trainWrapper),
+                                    row.names = 1:cvReps)
+  
+    # Now stop the cluster
+    parallel::stopCluster(cl)
+    
+  }
 
-  # Execute the training in parallel
-  parmEstimates <- list2df(parLapply(cl$cluster, cl$seedVec, trainWrapper),
-                           row.names = 1:cvReps)
+  ################################################################################
+  # Single thread
+  ################################################################################
+  
+  else {
 
-  # Now stop the cluster
-  stopCluster(cl$cluster)
+    parmEstimates <- Smisc::list2df(lapply(seedVec, trainWrapper),
+                                    row.names = 1:cvReps)
+
+  }
+  
 
   # The final parameter estimates will be the (alpha, lambda, tau) centroid in
   # the parameter estimates
@@ -294,9 +312,9 @@ LRCglmnet <- function(truthLabels, predictors, lossMat,
                       decreasing = TRUE)
 
   # Fit the model using the aggregate parameters
-  glmnetFinal <- glmnet(d$predictors, d$truthLabels, weights = d$weight,
-                        family = "binomial", lambda = lambdaVec,
-                        alpha = finalParmEstimates["alpha"])
+  glmnetFinal <- glmnet::glmnet(d$predictors, d$truthLabels, weights = d$weight,
+                                family = "binomial", lambda = lambdaVec,
+                                alpha = finalParmEstimates["alpha"])
 
   # Return the optimal parameters to make graphical output
   glmnetFinal$parms <- parmEstimates

@@ -35,6 +35,11 @@
 ##' coefficients using all the training data and then using the optimal \eqn{\tau} to
 ##' dichotomize the probability predictions from the logistic regression model into
 ##' one of two binary categories.
+##'
+##' For leave-one-out (LOO) cross-validation, which occurs when \code{cvFolds = NROW(predictors)},
+##' the values of \code{cvReps}, \code{masterSeed}, \code{cores}, and \code{cluster} are ignored, 
+##' since there is only one way to create the folds for LOO. Because parallelization happens
+##' at the cross-validation replicate level, parallization for LOO isn't currently available.
 ##' 
 ##' @author Landon Sego
 ##'
@@ -66,15 +71,16 @@
 ##' sample observations which are NA is greater than \code{naFilter}, the predictor is
 ##' not included in the elastic net model fitting.
 ##'
-##' @param cvFolds The number of cross validation folds. \code{cvFolds = NROW(predictors)}
-##' gives leave-one-out cross validation.
+##' @param cvFolds The number of cross validation folds, which must be between 2 and
+##' \code{NROW(predictors)}.  Note that \code{cvFolds = NROW(predictors)}
+##' gives leave-one-out (LOO) cross validation. See Details for more on LOO.
 ##'
 ##' @param cvReps The number of cross validation replicates, i.e., the number
 ##' of times to repeat the cross validation
 ##' by randomly repartitioning the data into folds.
-##'
+##' 
 ##' @param masterSeed The random seed used to generate unique seeds for
-##' each cross validation replicate.
+##' each cross validation replicate. 
 ##'
 ##' @param cores The number of cores on the local host
 ##' to use in parallelizing the training.  Parallelization
@@ -181,14 +187,13 @@
 
 
 ## TODO:  Test with factor predictors
-## TODO:  What
 
 LRCbestsubsets <- function(truthLabels, predictors, lossMat,
                            weight = rep(1, NROW(predictors)),
                            tauVec = seq(0.1, 0.9, by = 0.05),
                            naFilter = 0.6,
                            cvFolds = 5,
-                           cvReps = 100,
+                           cvReps = 10,
                            masterSeed = 1,
                            cores = 1,
                            cluster = NULL,
@@ -234,18 +239,20 @@ LRCbestsubsets <- function(truthLabels, predictors, lossMat,
   n <- length(d$truthLabels)
 
   # Report the number of observations
-  if (verbose)
+  if (verbose) {
     cat(n, "observations are available for fitting the LRCbestsubsets model\n")
+  }
 
   # Get the name of the truthLabels
   truthLabelName <- deparse(substitute(truthLabels))
 
-  # Create a combined data matrix in the form required by bestglm()
-  dm <- cbind(d$predictors, d$truthLabels)
-
   # If it's not a data frame, change it
-  if (is.matrix(dm))
-    dm <- as.data.frame(dm)
+  if (is.matrix(d$predictors)) {
+    d$predictors <- as.data.frame(d$predictors)
+  }
+
+  # Create a combined data frame in the form required by bestglm()
+  dm <- cbind(d$predictors, d$truthLabels)
 
   # Create column names for data frame
   colnames(dm) <- c(colnames(d$predictors), truthLabelName)
@@ -253,7 +260,24 @@ LRCbestsubsets <- function(truthLabels, predictors, lossMat,
   # Create the weight column
   weight <- d$weight
 
+  # Adjust cross-validation parameters based on new number of obs in the
+  # data frame (some might have been removed)
+  if (n > cvFolds) {
 
+    cvFolds <- n
+    
+    warning("After removing missing data, the largest possible number of 'cvFolds' is now ",
+            n, ",\ncorresponding to the number of non-missing observations.  This ",
+            "value will be used and will result in leave-one-out cross validation.")
+  }
+
+  
+  # For leave-one-out
+  if (n == cvFolds) {
+    cvReps <- 1
+    cores <- 1
+  }
+  
   # A wrapper function for calling single_LRCbestsubsets via parLapply
   trainWrapper <- function(seed) {
 
@@ -357,7 +381,7 @@ print.LRCbestsubsets <- function(LRCbestsubsets_object) {
   tau <- LRCbestsubsets_object$tau
   pvar(tau)
 
-  # Print the glm object
+  # Print the glm object   ### The :::  will be illegal for CRAN--need to fix
   stats:::print.glm(LRCbestsubsets_object)
 
   # Invisibly return the matrix of optimal tau values

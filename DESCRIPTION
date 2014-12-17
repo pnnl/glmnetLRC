@@ -8,5 +8,10 @@ Maintainer: Landon Sego <Landon.Sego@pnnl.gov>
 Description: Methods for fitting and predicting logistic regression classifiers
     (LRC) with an arbitrary loss function using elastic net or best subsets
 License: file LICENSE
-Imports: glmnet, plyr, Smisc, bestglm, parallel
+Imports:
+    glmnet,
+    plyr,
+    Smisc,
+    bestglm,
+    parallel
 Roxygen: list(wrap = FALSE)

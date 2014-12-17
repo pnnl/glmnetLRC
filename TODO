@@ -1,0 +1,15 @@
+*  Be smart about when the number of requested cv replicates exceeds the number of possible folds?  
+   Does it just become a ton of resampling with replacement?
+
+*  For smaller data sets, should we implement a method to do stratified bootstrap samples for the CV
+   in order to ensure that each CV sample contains both the "true" and the "false" cases?  Or stratification based
+   on any set of variables?
+
+*  Warning and 'skip' mechanism for when model training fails for a particular fold
+
+*  code for LOO, parallelize LOO
+
+*  Estimate of 'training' loss using the average of the loss for the optimal estimates for each CV rep?  Would 
+need to look at Hastie & Tibshirani  -- perhap by refitting the model to subsets?
+
+*  Change cvFold argument to training fraction

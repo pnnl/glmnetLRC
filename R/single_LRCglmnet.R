@@ -23,12 +23,12 @@ single_LRCglmnet <- function(truthLabels,
     trainSet <- sort(setdiff(1:n, testSet))
 
     # Train the elastic net regression
-    glmnetFit <- glmnet(predictors[trainSet,],
-                        truthLabels[trainSet],
-                        weights = weight[trainSet],
-                        family = "binomial",
-                        lambda = lambdaV,
-                        alpha = a)
+    glmnetFit <- glmnet::glmnet(predictors[trainSet,],
+                                truthLabels[trainSet],
+                                weights = weight[trainSet],
+                                family = "binomial",
+                                lambda = lambdaV,
+                                alpha = a)
 
     # Now test it
     out <- predLoss_LRCglmnet(glmnetFit, predictors[testSet,], truthLabels[testSet],
@@ -48,12 +48,12 @@ single_LRCglmnet <- function(truthLabels,
       Smisc::pvar(alpha)
 
     # Get the lambdaVec for this particular alpha using all the data
-    lambdaVec <- glmnet(predictors, truthLabels, weights = weight,
-                        family = "binomial", alpha = alpha)$lambda
+    lambdaVec <- glmnet::glmnet(predictors, truthLabels, weights = weight,
+                                family = "binomial", alpha = alpha)$lambda
 
     # Now train/test over all the cv folds
-    testAll <- list2df(lapply(tFold, trainTest, a = alpha,
-                              lambdaV = lambdaVec))
+    testAll <- Smisc::list2df(lapply(tFold, trainTest, a = alpha,
+                                     lambdaV = lambdaVec))
 
 
     # Add in the alpha
@@ -65,30 +65,30 @@ single_LRCglmnet <- function(truthLabels,
   } # cvForAlpha
 
   # Generate the test folds
-  testFolds <- parseJob(n, cvFolds, random.seed = seed)
+  testFolds <- Smisc::parseJob(n, cvFolds, random.seed = seed)
 
   # Test/train over the vector of alphas
-  completeTest <- list2df(lapply(alphaVec, function(x) cvForAlpha(x, testFolds)))
+  completeTest <- Smisc::list2df(lapply(alphaVec, function(x) cvForAlpha(x, testFolds)))
 
   # Now summarize the loss over the cv folds, with a loss value for each
   # alpha, lambda, and tau combination for a given seed
-  dfData <- list2df(dlply(completeTest,
+  dfData <- Smisc::list2df(plyr::dlply(completeTest,
 
-                          .variables = c('alpha', 'lambda','tau'),
+                                       .variables = c('alpha', 'lambda','tau'),
 
-                          .fun = function(x){
+                                       .fun = function(x){
 
-                             # x = K x K data.frame of values for the K folds with
-                             # same (alpha, lambda, tau, seed) parameter values.
-                             Eloss <- sum(x$weightedSumLoss) / sum(x$sumWeights)
+                                          # x = K x K data.frame of values for the K folds with
+                                          # same (alpha, lambda, tau, seed) parameter values.
+                                          Eloss <- sum(x$weightedSumLoss) / sum(x$sumWeights)
 
-                             return(list('ExpectedLoss' = Eloss,
-                                         'alpha' = unique(x$alpha),
-                                         'tau' = unique(x$tau),
-                                         'lambda' = unique(x$lambda)))
-                           }),
+                                          return(list('ExpectedLoss' = Eloss,
+                                                      'alpha' = unique(x$alpha),
+                                                      'tau' = unique(x$tau),
+                                                      'lambda' = unique(x$lambda)))
+                                        }),
 
-                     row.names = NULL)
+                           row.names = NULL)
 
 
   if (any(is.na(dfData)))
@@ -101,7 +101,7 @@ single_LRCglmnet <- function(truthLabels,
   # If still tied, larger values of lambda are prefered because they reduce the
   # number of predictors to create a more parsimonous model with fewer predictors
   dfData$sqErrorTau <- (dfData$tau - 0.5)^2
-  gridMinimum <- sortDF(dfData, ~ExpectedLoss + sqErrorTau - lambda)[1,]
+  gridMinimum <- Smisc::sortDF(dfData, ~ ExpectedLoss + sqErrorTau - lambda)[1,]
 
   # Add in the seed
   gridMinimum$seed <- seed

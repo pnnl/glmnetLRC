@@ -102,7 +102,7 @@ predLoss_LRCglmnet <- function(glmnetFit, newData, truthLabels, lossMat,
 
     # x is a value of tau
 
-    out <- list2df(apply(preds, 2, calcLossOverLambda, tau = x))
+    out <- Smisc::list2df(apply(preds, 2, calcLossOverLambda, tau = x))
     out$tau <- x
     out$lambda <- glmnetFit$lambda
 
@@ -113,6 +113,6 @@ predLoss_LRCglmnet <- function(glmnetFit, newData, truthLabels, lossMat,
   # Calculate the weighted sum of the loss and the sum of the weights
   # (aggregated over the observations provided in 'newData') for
   # each combination of tau and lambda
-  return(list2df(lapply(tauVec, calcLossOverTau)))
+  return(Smisc::list2df(lapply(tauVec, calcLossOverTau)))
 
 } # predLoss_LRCglmnet
