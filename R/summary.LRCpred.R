@@ -43,48 +43,10 @@ summary.LRCpred <- function(LRCpredObject) {
 
   }
 
-  # Calculate the confusion matrix
-  confusion_matrix <- confusion(LRCpredObject[, truthCol],
-                                LRCpredObject[,"PredictClass"])
-
-  # calculate sensitivity
-  sens <- sensitivity(confusion_matrix)
-
-  # calculate specificity
-  spec <- specificity(confusion_matrix)
-
-  # calculate accuracy
-  acc <- accuracy(confusion_matrix)
-
-  # false negative rate = 1 - TPR = 1 - sensitivity
-  FNR <- function(confusionSummary, aggregate = c('micro', 'macro')){
-    sens <- sensitivity(confusionSummary)
-    return(1 - sens$byClass)
-  }
-
-  # false positive rate = 1 - TNR = 1 - specificity
-  FPR <- function(confusionSummary, aggregate = c('micro', 'macro')){
-    spec <- specificity(confusionSummary)
-    return(1 - spec$byClass)
-  }
-
-  # calculate fnr
-  fnr <- FNR(confusion_matrix)
-
-  # calculate fpr
-  fpr <- FPR(confusion_matrix)
-
-  # put it into a data.frame format
-  summ_out <- rbind(sens$byClass, spec$byClass, fnr, fpr, acc$byClass)
-
-  # Only show the second class--the target of the prediction
-  summ_out <- matrix(summ_out[,attributes(LRCpredObject)$classNames[2]], ncol = 1)
-
-  colnames(summ_out) <- attributes(LRCpredObject)$classNames[2]
-
-  rownames(summ_out) <- c("sensitivity", "specificity",
-                          "false negative rate", "false positive rate",
-                          "accuracy")
+  # Calculate the confusion matrix metrics
+  summ_out <- cmMetrics(LRCpredObject[, truthCol],
+                        LRCpredObject[,"PredictClass"],
+                        attributes(LRCpredObject)$classNames[2])
 
   return(as.data.frame(summ_out))
 
