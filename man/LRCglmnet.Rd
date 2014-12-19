@@ -9,7 +9,7 @@
 LRCglmnet(truthLabels, predictors, lossMat, weight = rep(1, NROW(predictors)),
   alphaVec = seq(0, 1, by = 0.2), tauVec = seq(0.1, 0.9, by = 0.05),
   naFilter = 0.6, cvFolds = 5, cvReps = 100, masterSeed = 1,
-  cores = 1, cluster = NULL, verbose = FALSE)
+  cores = 1, cluster = NULL, estimateLoss = FALSE, verbose = FALSE)
 
 \method{print}{LRCglmnet}(LRCglmnet_object)
 
@@ -34,8 +34,9 @@ The default value
 is 1 for each observation. Refer to \code{\link{glmnet}} for further
 information.}
 
-\item{alphaVec}{A vector of elastic net mixing parameters. Refer to
-\code{\link{glmnet}} for further information.}
+\item{alphaVec}{A vector of potential values for the elastic net mixing parameter,
+alpha. A value of alpha = 1 is the lasso penalty, alpha = 0 is the ridge penalty.
+Refer to \code{\link{glmnet}} for further information.}
 
 \item{tauVec}{A sequence of tau threshold values for the
 logistic regression classifier.}
@@ -46,8 +47,7 @@ for a given predictor
 sample observations which are NA is greater than \code{naFilter}, the predictor is
 not included in the elastic net model fitting.}
 
-\item{cvFolds}{The number of cross validation folds. \code{cvFolds = NROW(predictors)}
-gives leave-one-out cross validation.}
+\item{cvFolds}{The number of cross validation folds.}
 
 \item{cvReps}{The number of cross validation replicates, i.e., the number
 of times to repeat the cross validation
@@ -68,6 +68,12 @@ Parallelization is executed using \code{\link{parLapply}} from the
 \code{\link{makeCluster}} in package \pkg{parallel}. The \code{cores} argument is ignored when a
 \code{cluster} is provided.}
 
+\item{estimateLoss}{A logical, set to \code{TRUE} to calculate the average loss estimated via
+cross validation using the optimized parameters \eqn{(\alpha, \lambda, \tau)} to fit the elastic
+net model for each cross validation fold.
+This requires another cross-validation pass through the data, but using only
+the optimal parameters to estimate the loss for each cross-validation replicate.}
+
 \item{verbose}{A logical, set to \code{TRUE} to receive messages regarding
 the progress of the training algorithm.}
 
@@ -80,10 +86,7 @@ which contains the optimally-trained elastic net logistic regression classifier}
 Returns an object of class \code{LRCglmnet}, which
 inherits from classes \code{lognet} and \code{glmnet}.  It contains the
 object returned by \code{\link{glmnet}} that has been fit to all the data using
-the optimal parameters \eqn{(\alpha, \lambda, \tau)}. It also contains the values
-of the optimal parameters (averaged over the cross validation replicates), and it
-contains the parameter estimates from the individual cross validation replicates
-as well.
+the optimal parameters \eqn{(\alpha, \lambda, \tau)}. It also contains the following additional elements:
 }
 \description{
 This functions extends the \code{\link{glmnet}} and \code{\link{cv.glmnet}}
@@ -125,7 +128,14 @@ coefficients to all the training data using the optimal \eqn{(\alpha,\lambda,\ta
 \itemize{
 \item \code{print}: Displays the overall optimized values of
 \eqn{(\alpha, \lambda, \tau)}, with the corresponding degrees of freedom and
-deviance.  Invisibly returns the same information as a matrix.
+deviance for the model fit to all the data using the optimzed parameters.  If \code{estimateLoss = TRUE}
+when \code{LRCglmnet} was called, the mean and standard deviation of the expected loss are also shown.
+These estimates of the loss are obtained by calculating the standard cross-validation estimate
+of the loss using the glmnet models fit to the trainining folds using the optimized values of
+\eqn{(\alpha, \lambda, \tau)}.  The same partitions of the data that were used originally to train the
+LRC are used again, and an estimate of the loss is obtained for each cross validation replicate. The
+mean and standard deviation of these loss estimates are then shown by this print method. In addition,
+all of this same information is returned invisibly as a matrix.
 
 \item \code{plot}: Produces a pairs plot of the
 \eqn{(\alpha, \lambda, \tau)} triples and their univariate histograms that
@@ -133,9 +143,9 @@ were identified as optimal for each of the monte-carlo replicates of the
 cross-validation partitioning.  This can provide a sense of how stable the estimates
 are across the cross-validation replicates.
 
-\item \code{coef}: Calls the \code{\link{coef.glmnet}} method in \pkg{glmnet}
-on the fitted glmnet object and returns the logistic regression coefficients
-using the optimal values of \eqn{\alpha} and \eqn{\lambda}.
+\item \code{coef}: Calls the \code{\link{predict}} method in \pkg{glmnet}
+on the fitted glmnet object and returns the a named vector of the logistic
+regression coefficients using the optimal values of \eqn{\alpha} and \eqn{\lambda}.
 }}
 \examples{
 # Load the VOrbitrap Shewanella QC data

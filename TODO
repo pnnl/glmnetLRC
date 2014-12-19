@@ -9,7 +9,9 @@
 
 *  code for LOO, parallelize LOO
 
-*  Estimate of 'training' loss using the average of the loss for the optimal estimates for each CV rep?  Would 
-need to look at Hastie & Tibshirani  -- perhap by refitting the model to subsets?
+*  Unit testing code
 
-*  Change cvFold argument to training fraction
+*  Documentation for LRCglmnet
+
+*  Bring LRCbestsubsets up to speed
+

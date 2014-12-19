@@ -58,8 +58,9 @@
 ##' is 1 for each observation. Refer to \code{\link{glmnet}} for further
 ##' information.
 ##'
-##' @param alphaVec A vector of elastic net mixing parameters. Refer to
-##' \code{\link{glmnet}} for further information.
+##' @param alphaVec A vector of potential values for the elastic net mixing parameter,
+##' alpha. A value of alpha = 1 is the lasso penalty, alpha = 0 is the ridge penalty.
+##' Refer to \code{\link{glmnet}} for further information.
 ##'
 ##' @param tauVec A sequence of tau threshold values for the
 ##' logistic regression classifier.
@@ -70,8 +71,9 @@
 ##' sample observations which are NA is greater than \code{naFilter}, the predictor is
 ##' not included in the elastic net model fitting.
 ##'
-##' @param cvFolds The number of cross validation folds. \code{cvFolds = NROW(predictors)}
-##' gives leave-one-out cross validation.
+##' @param cvFolds The number of cross validation folds.
+##\code{cvFolds = NROW(predictors)}
+## gives leave-one-out cross validation.
 ##'
 ##' @param cvReps The number of cross validation replicates, i.e., the number
 ##' of times to repeat the cross validation
@@ -92,6 +94,12 @@
 ##' \code{\link{makeCluster}} in package \pkg{parallel}. The \code{cores} argument is ignored when a
 ##' \code{cluster} is provided.
 ##'
+##' @param estimateLoss A logical, set to \code{TRUE} to calculate the average loss estimated via
+##' cross validation using the optimized parameters \eqn{(\alpha, \lambda, \tau)} to fit the elastic
+##' net model for each cross validation fold.
+##' This requires another cross-validation pass through the data, but using only 
+##' the optimal parameters to estimate the loss for each cross-validation replicate.
+##' 
 ##' @param verbose A logical, set to \code{TRUE} to receive messages regarding
 ##' the progress of the training algorithm.
 ##'
@@ -99,10 +107,16 @@
 ##' Returns an object of class \code{LRCglmnet}, which
 ##' inherits from classes \code{lognet} and \code{glmnet}.  It contains the
 ##' object returned by \code{\link{glmnet}} that has been fit to all the data using
-##' the optimal parameters \eqn{(\alpha, \lambda, \tau)}. It also contains the values
-##' of the optimal parameters (averaged over the cross validation replicates), and it
-##' contains the parameter estimates from the individual cross validation replicates
-##' as well.
+##' the optimal parameters \eqn{(\alpha, \lambda, \tau)}. It also contains the following additional elements:
+## TODO \describe{
+##' 
+##'
+## }
+##'
+## values
+## of the optimal parameters (averaged over the cross validation replicates), and it
+## contains the parameter estimates from the individual cross validation replicates
+## as well.
 ##'
 ##' @references
 ##' Amidan BG, Orton DJ, LaMarche BL, Monroe ME, Moore RJ,
@@ -180,9 +194,10 @@ LRCglmnet <- function(truthLabels, predictors, lossMat,
                       masterSeed = 1,
                       cores = 1,
                       cluster = NULL,
+                      estimateLoss = FALSE,
                       verbose = FALSE) {
 
-  # Checks on inputs
+  # Checks inputs
   stopifnot(is.factor(truthLabels),
             length(levels(truthLabels)) == 2,
             NCOL(predictors) > 1,
@@ -196,17 +211,22 @@ LRCglmnet <- function(truthLabels, predictors, lossMat,
             all(tauVec < 1) & all(tauVec > 0),
             length(naFilter) == 1,
             is.numeric(naFilter),
-            naFilter < 1 & naFilter > 0,
+            (naFilter < 1) & (naFilter > 0),
             length(cvFolds) == 1,
-            length(cvReps) == 1,
             is.numeric(cvFolds),
-            is.numeric(cvReps),
             cvFolds %% 1 == 0,
             cvFolds >= 2,
             cvFolds <= NROW(predictors),
+            length(cvReps) == 1,
+            is.numeric(cvReps),
             cvReps %% 1 == 0,
             cvReps > 0,
-            is.numeric(masterSeed))
+            is.numeric(masterSeed),
+            length(masterSeed) == 1,
+            is.logical(verbose),
+            length(verbose) == 1,
+            is.logical(estimateLoss),
+            length(estimateLoss) == 1)
 
   # Force the evaluation of the weight object immediately--this is IMPORTANT
   # because of R's lazy evaluation
@@ -223,11 +243,16 @@ LRCglmnet <- function(truthLabels, predictors, lossMat,
   n <- length(d$truthLabels)
 
   # Report the number of observations
-  if (verbose)
+  if (verbose) {
     cat(n, "observations are available for fitting the LRCglmnet model\n")
+  }
 
   # A wrapper function for calling single_LRCglmnet via parLapply
-  trainWrapper <- function(seed) {
+  trainWrapper <- function(seed,
+                           alphaVec = 1,
+                           tauVec = 0.5,
+                           lambdaVal = NULL,
+                           lambdaVec = NULL) {
 
     single_LRCglmnet(d$truthLabels,
                      d$predictors,
@@ -238,7 +263,9 @@ LRCglmnet <- function(truthLabels, predictors, lossMat,
                      cvFolds,
                      seed,
                      n,
-                     verbose)
+                     verbose,
+                     lambdaVal = lambdaVal,
+                     lambdaVec = lambdaVec)
 
   } # trainWrapper
 
@@ -259,8 +286,6 @@ LRCglmnet <- function(truthLabels, predictors, lossMat,
     # Export the required objects to the worker nodes
     parallel::clusterExport(cl,
                             c("d",
-                              "alphaVec",
-                              "tauVec",
                               "n",
                               "cvFolds",
                               "lossMat",
@@ -269,11 +294,16 @@ LRCglmnet <- function(truthLabels, predictors, lossMat,
   
   
     # Execute the training in parallel
-    parmEstimates <- Smisc::list2df(parallel::parLapply(cl, seedVec, trainWrapper),
-                                    row.names = 1:cvReps)
+    parmEstimates <-
+      Smisc::list2df(parallel::parLapply(cl, seedVec, trainWrapper,
+                                         alphaVec = alphaVec,
+                                         tauVec = tauVec),
+                     row.names = 1:cvReps)
   
     # Now stop the cluster
-    parallel::stopCluster(cl)
+    if (!estimateLoss) {
+      parallel::stopCluster(cl)
+    }
     
   }
 
@@ -283,7 +313,9 @@ LRCglmnet <- function(truthLabels, predictors, lossMat,
   
   else {
 
-    parmEstimates <- Smisc::list2df(lapply(seedVec, trainWrapper),
+    parmEstimates <- Smisc::list2df(lapply(seedVec, trainWrapper,
+                                           alphaVec = alphaVec,
+                                           tauVec = tauVec),
                                     row.names = 1:cvReps)
 
   }
@@ -305,22 +337,71 @@ LRCglmnet <- function(truthLabels, predictors, lossMat,
   # with a sequence of lambdas during the fitting.  But the predict method only
   # operates on the optimal lambda
   sdLambda <- sd(parmEstimates$lambda)
-  lambdaVec <- sort(c(finalParmEstimates["lambda"],
-                      seq(finalParmEstimates["lambda"] + sdLambda,
-                          max(finalParmEstimates["lambda"] - sdLambda, 1e-04),
+  lambdaVec <- sort(c(finalParmEstimates[["lambda"]],
+                      seq(finalParmEstimates[["lambda"]] + sdLambda,
+                          max(finalParmEstimates[["lambda"]] - sdLambda, 1e-04),
                           length = 50)),
                       decreasing = TRUE)
 
   # Fit the model using the aggregate parameters
   glmnetFinal <- glmnet::glmnet(d$predictors, d$truthLabels, weights = d$weight,
                                 family = "binomial", lambda = lambdaVec,
-                                alpha = finalParmEstimates["alpha"])
+                                alpha = finalParmEstimates[["alpha"]])
 
   # Return the optimal parameters to make graphical output
   glmnetFinal$parms <- parmEstimates
 
   # Return the aggregated optimal parameters (gridVals)
   glmnetFinal$optimalParms <- finalParmEstimates
+  
+  ################################################################################
+  # If we are to estimate the loss by averaging the cross validation loss over
+  # all the CV replicates, using the optimal parameters for each fit to a CV
+  # training set.  Will use the same random seeds as before to constructe
+  # the training/testing sets.
+  ################################################################################
+  
+  if (estimateLoss) {
+
+    ################################################################################
+    # Run on the cluster which was set up earlier
+    ################################################################################
+    if (cores > 1) {
+    
+      # Execute the training in parallel
+      lossEstimates <-
+        Smisc::list2df(parallel::parLapply(cl, seedVec, trainWrapper,
+                                           alphaVec = finalParmEstimates[["alpha"]],
+                                           tauVec = finalParmEstimates[["tau"]],
+                                           lambdaVec = lambdaVec,
+                                           lambdaVal = finalParmEstimates[["lambda"]]),
+                       row.names = 1:cvReps)
+    
+      # Now stop the cluster
+      parallel::stopCluster(cl)
+      
+    }
+  
+    ################################################################################
+    # Single thread
+    ################################################################################
+    
+    else {
+  
+      lossEstimates <-
+        Smisc::list2df(lapply(seedVec, trainWrapper,
+                              alphaVec = finalParmEstimates[["alpha"]],
+                              tauVec = finalParmEstimates[["tau"]],
+                              lambdaVec = lambdaVec,
+                              lambdaVal = finalParmEstimates[["lambda"]]),
+                       row.names = 1:cvReps)
+    }
+
+
+    # Include the loss estimates in the final
+    glmnetFinal$lossEstimates <- lossEstimates
+
+  } # finish estimating loss
 
   # Assign the class
   class(glmnetFinal) <- c("LRCglmnet", class(glmnetFinal))
@@ -334,7 +415,14 @@ LRCglmnet <- function(truthLabels, predictors, lossMat,
 ##'
 ##' @describeIn LRCglmnet Displays the overall optimized values of
 ##' \eqn{(\alpha, \lambda, \tau)}, with the corresponding degrees of freedom and
-##' deviance.  Invisibly returns the same information as a matrix.
+##' deviance for the model fit to all the data using the optimzed parameters.  If \code{estimateLoss = TRUE}
+##' when \code{LRCglmnet} was called, the mean and standard deviation of the expected loss are also shown.
+##' These estimates of the loss are obtained by calculating the standard cross-validation estimate
+##' of the loss using the glmnet models fit to the trainining folds using the optimized values of
+##' \eqn{(\alpha, \lambda, \tau)}.  The same partitions of the data that were used originally to train the
+##' LRC are used again, and an estimate of the loss is obtained for each cross validation replicate. The
+##' mean and standard deviation of these loss estimates are then shown by this print method. In addition,
+##' all of this same information is returned invisibly as a matrix.
 ##'
 ##' @param LRCglmnet_object An object of class \code{LRCglmnet}, returned by \code{LRCglmnet},
 ##' which contains the optimally-trained elastic net logistic regression classifier
@@ -354,6 +442,18 @@ print.LRCglmnet <- function(LRCglmnet_object) {
                nrow = 1,
                dimnames = list(NULL, c("Df", "%Dev",
                                        names(LRCglmnet_object$optimalParms))))
+
+  # Add in the loss estimates if they are present
+  if (!is.null(LRCglmnet_object$lossEstimates)) {
+      
+    le <- matrix(c(mean(LRCglmnet_object$lossEstimates$ExpectedLoss),
+                   sd(LRCglmnet_object$lossEstimates$ExpectedLoss)),
+                 nrow = 1,
+                 dimnames = list(NULL, c("mean.ExpectedLoss", "sd.ExpectedLoss")))
+
+    op <- cbind(op, le)
+
+  }
 
   # Print the optimal parms
   cat("The optimal parameter values for the elastic net logistic regression fit: \n")
@@ -378,7 +478,7 @@ print.LRCglmnet <- function(LRCglmnet_object) {
 plot.LRCglmnet <- function(LRCglmnet_object, ...){
 
   ## put histograms on the diagonal
-  panel.hist <- function(x, ...) {
+  panelHistogram <- function(x, ...) {
 
       usr <- par("usr"); on.exit(par(usr))
       par(usr = c(usr[1:2], 0, 1.5) )
@@ -388,7 +488,6 @@ plot.LRCglmnet <- function(LRCglmnet_object, ...){
       rect(breaks[-nB], 0, breaks[-1], y, col = "cyan", ...)
   }
 
-
   # Default parameter values
   defaultParms <- list(x = LRCglmnet_object$parms[,c("alpha", "lambda", "tau")],
                        labels = c(expression(alpha), expression(lambda), expression(tau)),
@@ -397,7 +496,7 @@ plot.LRCglmnet <- function(LRCglmnet_object, ...){
                        cex.labels = 2,
                        font.labels = 2,
                        bg = "light blue",
-                       diag.panel = panel.hist,
+                       diag.panel = panelHistogram,
                        main = paste("Optimal LRCglmnet parameters for",
                                     NROW(LRCglmnet_object$parms),
                                     "cross validation replicates"))
@@ -416,17 +515,36 @@ plot.LRCglmnet <- function(LRCglmnet_object, ...){
 
 } # plot.LRCglmnet
 
+
 ##' @method coef LRCglmnet
 ##'
-##' @describeIn LRCglmnet Calls the \code{\link{coef.glmnet}} method in \pkg{glmnet}
-##' on the fitted glmnet object and returns the logistic regression coefficients
-##' using the optimal values of \eqn{\alpha} and \eqn{\lambda}.
+##' @describeIn LRCglmnet Calls the \code{\link{predict}} method in \pkg{glmnet}
+##' on the fitted glmnet object and returns the a named vector of the logistic
+##' regression coefficients using the optimal values of \eqn{\alpha} and \eqn{\lambda}.
 ##'
 ##' @export
 
 coef.LRCglmnet <- function(LRCglmnet_object) {
 
-  glmnet:::coef.glmnet(LRCglmnet_object, s = LRCglmnet_object$optimalParms["lambda"])
+  if (!inherits(LRCglmnet_object, "glmnet")) {
+    stop("Unexpected error.  The 'LRCglmnet_object' does not inherit from 'glmnet'")
+  }
 
+  # Reset the class so that predicting methods work more easily
+  class(LRCglmnet_object) <- setdiff(class(LRCglmnet_object), "LRCglmnet")
+
+  # Verify the optimal lambda is in there (it should be)
+  if (!(LRCglmnet_object$optimalParms[["lambda"]] %in% LRCglmnet_object$lambda)) {
+    stop("Unexpected error.  The optimal value of lambda was not in 'LRCglmnet_ojbect$lambda'")
+  }
+
+  # Get the matrix of coefs for the optimal lambda
+  coefs <- as.matrix(predict(LRCglmnet_object,
+                             s = LRCglmnet_object$optimalParms[["lambda"]],
+                             type = "coefficients"))
+
+  # Remove the 0's
+  return(coefs[coefs[,1] != 0,])
+  
 } # coef.LRCglmnet
 
