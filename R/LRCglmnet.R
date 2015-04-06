@@ -234,7 +234,7 @@ LRCglmnet <- function(truthLabels, predictors, lossMat,
   
 
   # Load the glmnetLRC package on the worker nodes
-  clusterEvalQ(cl$cluster, require(glmnetLRC))
+  clusterEvalQ(cl$cluster, require(lrc))
 
   # Export the required objects to the worker nodes
   clusterExport(cl$cluster,
