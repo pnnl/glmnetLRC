@@ -29,6 +29,9 @@
 ## @param weight A numeric vector indicating the relative weight to ascribe
 ## to each row of \code{newData}
 ##
+## @param lambdaVec A numeric vector of lambda values for which the loss will
+## be calculated.
+##
 ## @return A data frame containing \code{weightedSumLoss} (the sum of the
 ## product of the weights and the loss) and \code{sumWeights}
 ## (the sum of the weights) for each value of \code{tau} and \code{lambda}.  The
@@ -48,8 +51,8 @@
 ################################################################################
 
 predLoss_LRCglmnet <- function(glmnetFit, newData, truthLabels, lossMat,
-                               tauVec = seq(0.1, 0.9, by = 0.1),
-                               weight = rep(1, NROW(newData))) {
+                               tauVec = seq(0.1, 0.9, by = 0.1), 
+                               weight = rep(1, NROW(newData)), lambdaVec = NULL) {
 
   # Check inputs
   stopifnot(inherits(glmnetFit, "lognet"),
@@ -74,7 +77,7 @@ predLoss_LRCglmnet <- function(glmnetFit, newData, truthLabels, lossMat,
 
   # For each lambda, make probabality predictions that the instance is an
   # element of the class with the largest factor level
-  preds <- predict(glmnetFit, newData, type = "response")
+  preds <- predict(glmnetFit, newData, s = lambdaVec, type = "response")
 
   # Let Z be the last level of the response (Z = levels(truthLabels)[2])
   # The preds matrix returned by predict(glmnet, ...) is  P(x elem Z)
@@ -95,24 +98,33 @@ predLoss_LRCglmnet <- function(glmnetFit, newData, truthLabels, lossMat,
 
     return(cl)
 
-  }
+  } # calcClossOverLambda
 
   # Calculate the loss over the taus
   calcLossOverTau <- function(x) {
-
+      
     # x is a value of tau
-
-    out <- list2df(apply(preds, 2, calcLossOverLambda, tau = x))
+      
+    out <- Smisc::list2df(apply(preds, 2, calcLossOverLambda, tau = x))
     out$tau <- x
-    out$lambda <- glmnetFit$lambda
+
+    # if lambdaVec was supplied, then preditions were made using lambdaVec
+    if (!is.null(lambdaVec)) {
+      out$lambda <- lambdaVec
+    }
+    # otherwise predictions would have been made using the lambdas in the
+    # fitted glmnet object
+    else {
+      out$lambda <- glmnetFit$lambda
+    }
 
     return(out)
 
-  }
+  } # calcClossOverTau
 
   # Calculate the weighted sum of the loss and the sum of the weights
   # (aggregated over the observations provided in 'newData') for
   # each combination of tau and lambda
-  return(list2df(lapply(tauVec, calcLossOverTau)))
+  return(Smisc::list2df(lapply(tauVec, calcLossOverTau)))
 
 } # predLoss_LRCglmnet

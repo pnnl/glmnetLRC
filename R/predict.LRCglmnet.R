@@ -2,7 +2,8 @@
 ##'
 ##' @author Landon Sego
 ##'
-##'
+##' @importFrom glmnet predict.lognet
+##' 
 ##' @method predict LRCglmnet
 ##'
 ##' @param LRCglmnet_object An object of class \code{LRCglmnet}, returned by
@@ -38,6 +39,11 @@ predict.LRCglmnet <- function(LRCglmnet_object,
                               truthCol = NULL,
                               keepCols = NULL) {
 
+  # Verify it inherits from the lognet class
+  if (!inherits(LRCglmnet_object, "lognet")) {
+    stop("Unexpected error:  Object of class 'LRCglmnet' does not inherit from 'lognet'")
+  }
+
   # Switching from column numbers to column names if necessary
   if (!is.null(truthCol) & is.numeric(truthCol)) {
      truthCol <- colnames(newdata)[truthCol]
@@ -46,7 +52,6 @@ predict.LRCglmnet <- function(LRCglmnet_object,
   if (!is.null(keepCols) & is.numeric(keepCols)) {
      keepCols <- colnames(newdata)[keepCols]
   }
-
 
   # Verify the levels of truthCol match the class names in the LRCglmnet_object
   if (!is.null(truthCol)) {
@@ -80,7 +85,8 @@ predict.LRCglmnet <- function(LRCglmnet_object,
   class(glmnetObject) <- setdiff(class(LRCglmnet_object), "LRCglmnet")
 
 
-  # Get the numeric (probability) predictions from predict.glmnet using the optimal lambda
+  # Get the numeric (probability) predictions using predict methods from glmnet package
+  # using the optimal lambda
   preds <- predict(glmnetObject, nd,
                    s = LRCglmnet_object$optimalParms["lambda"],
                    type = "response")
@@ -122,5 +128,3 @@ predict.LRCglmnet <- function(LRCglmnet_object,
   return(output)
 
 } # predict.LRCglmnet
-
-
