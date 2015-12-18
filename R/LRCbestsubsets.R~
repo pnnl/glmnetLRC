@@ -37,10 +37,10 @@
 ##' one of two binary categories.
 ##'
 ##' For leave-one-out (LOO) cross-validation, which occurs when \code{cvFolds = NROW(predictors)},
-##' the values of \code{cvReps}, \code{masterSeed}, \code{nJobs} are ignored,
+##' the values of \code{cvReps}, \code{masterSeed}, \code{cores}, and \code{cluster} are ignored, 
 ##' since there is only one way to create the folds for LOO. Because parallelization happens
 ##' at the cross-validation replicate level, parallization for LOO isn't currently available.
-##'
+##' 
 ##' @author Landon Sego
 ##'
 ##' @rdname LRCbestsubsets
@@ -78,17 +78,21 @@
 ##' @param cvReps The number of cross validation replicates, i.e., the number
 ##' of times to repeat the cross validation
 ##' by randomly repartitioning the data into folds.
-##'
+##' 
 ##' @param masterSeed The random seed used to generate unique seeds for
-##' each cross validation replicate.
+##' each cross validation replicate. 
 ##'
-##' @param nJobs The number of cores on the local host
+##' @param cores The number of cores on the local host
 ##' to use in parallelizing the training.  Parallelization
 ##' takes place at the \code{cvReps} level, i.e., if \code{cvReps = 1}, parallelizing would
 ##' do no good, whereas if \code{cvReps = 2}, each rep would be run separately in its
 ##' own thread if \code{cores = 2}.
-##' Parallelization is executed using \code{\link{parLapplyW}} from the
-##' \pkg{Smisc} package.
+##' Parallelization is executed using \code{\link{parLapply}} from the
+##' \pkg{parallel} package.
+##'
+##' @param cluster An object that inherits from class \code{cluster} that is returned by
+##' \code{\link{makeCluster}} in package \pkg{parallel}. The \code{cores} argument is
+##' ignored when a \code{cluster} is provided.
 ##'
 ##' @param verbose A logical, set to \code{TRUE} to receive messages regarding
 ##' the progress of the training algorithm.
@@ -115,67 +119,67 @@
 ##' # Load the Mojave data
 ##' data(Mojave)
 ##' str(Mojave)
-##'
+##' 
 ##' # Here we select the predictor variables (remove the location variables and the response)
 ##' predictors <- Mojave[,-c(1,2,11)]
-##'
+##' 
 ##' # Create a vector for the response (presence/absence of cheat grass)
 ##' cheat <- Mojave$cheatGrass
-##'
+##' 
 ##' # "0" is no cheatgrass observed and "1" is cheatgrass.  Note how "1" is the second level
 ##' # of the factor. This second level is the level for which the summary methods calculate
 ##' # the sensitivity. So the factor coding here is perfect, since we are most interested
 ##' # in predicting the presence of cheatgrass with greatest sensitivity (power).
 ##' levels(cheat)
-##'
+##' 
 ##' # Specify the loss matrix. In this example, we specify the penalty for missing
 ##' # cheatgrass as 2, while the penalty for predicting it falsely is 1.
 ##' lM <- lossMatrix(c("0","0","1","1"),
-##'                  c("0","1","0","1"),
+##'                  c("0","1","0","1"), 
 ##'                  c(0,   1,  2,  0))
 ##' print(lM)
-##'
+##' 
 ##' # Train the best subsets logistis regression classifier (in particular, identify
 ##' # the optimal threshold, tau, that minimizes the loss).  As this takes some time,
-##' # we'll skip this step
+##' # we'll skip this step 
 ##' \dontrun{LRCbestsubsets_fit <- LRCbestsubsets(cheat, predictors, lM,
 ##'                                               cvReps = 100, cvFolds = 5,
 ##'                                               cores = max(1, detectCores() - 1))}
-##'
-##'
+##' 
+##' 
 ##' # We'll load the precalculated model fit instead
 ##' \donttest{data(LRCbestsubsets_fit)}
-##'
+##' 
 ##' \dontshow{
 ##' # Here is a call to LRCbestsubsets() that will run quickly for testing purposes
 ##' LRCbestsubsets_fit <- LRCglmnet((cheat, predictors, lM, cvReps = 3,
 ##'                                  cvFolds = 3, cores = max(1, detectCores() - 1),
 ##'                                  tauVec = c(0.4, 0.5)))
 ##' }
-##'
-##'
+##' 
+##' 
 ##' # Demonstrate the various methods for LRCbestsubsets() output
 ##' # (print, summary, plot, coef)
 ##' print(LRCbestsubsets_fit)
-##'
+##' 
 ##' # Assigning the output of print extracts the set of optimal taus that
 ##' # were identified during the cross validation replicates
 ##' o <- print(LRCbestsubsets_fit)
 ##' o
-##'
+##' 
 ##' # Sumarize the best fit LRC
 ##' summary(LRCbestsubsets_fit)
-##'
+##' 
 ##' # Plot the loss as a function of the optimal taus for each cross validation
 ##' # replicate.  Also plot the bestsubsets logistic regression glm object.
 ##' plot(LRCbestsubsets_fit)
-##'
+##' 
 ##' # Display the coefficients
 ##' coef(LRCbestsubsets_fit)
-##'
+##' 
 ##' # Make predictions using final model on the training data
 ##' out <- predict(LRCbestsubsets_fit, Mojave, truthCol = "cheatGrass")
-##'
+##' 
 ##' head(out)
 ##'
 ##' # Calculate the performance of predictions
@@ -191,10 +195,11 @@ LRCbestsubsets <- function(truthLabels, predictors, lossMat,
                            cvFolds = 5,
                            cvReps = 10,
                            masterSeed = 1,
-                           nJobs = 1,
+                           cores = 1,
+                           cluster = NULL,
                            verbose = FALSE,
                            ...) {
-
+  
   # Checks on inputs
   stopifnot(is.factor(truthLabels),
 #            is.matrix(predictors), I don't think a matrix is necessary for GLM
@@ -217,10 +222,7 @@ LRCbestsubsets <- function(truthLabels, predictors, lossMat,
             cvFolds <= NROW(predictors),
             cvReps %% 1 == 0,
             cvReps > 0,
-            is.numeric(masterSeed),
-            is.numeric(nJobs),
-            nJobs >= 1,
-            is.logical(verbose))
+            is.numeric(masterSeed))
 
   # Force the evaluation of the weight object immediately--this is IMPORTANT
   # because of R's lazy evaluation
@@ -263,19 +265,19 @@ LRCbestsubsets <- function(truthLabels, predictors, lossMat,
   if (n > cvFolds) {
 
     cvFolds <- n
-
+    
     warning("After removing missing data, the largest possible number of 'cvFolds' is now ",
             n, ",\ncorresponding to the number of non-missing observations.  This ",
             "value will be used and will result in leave-one-out cross validation.")
   }
 
-
+  
   # For leave-one-out
   if (n == cvFolds) {
     cvReps <- 1
-    nJobs <- 1
+    cores <- 1
   }
-
+  
   # A wrapper function for calling single_LRCbestsubsets via parLapply
   trainWrapper <- function(seed) {
 
@@ -297,29 +299,37 @@ LRCbestsubsets <- function(truthLabels, predictors, lossMat,
   ################################################################################
   # Set up the cluster and run CV in parallel
   ################################################################################
-
-  if (nJobs > 1) {
-
+  
+  if (cores > 1) {
+  
+    cl <- createCluster(cvReps, cluster, cores)
+    
+    # Load the glmnetLRC package on the worker nodes
+    parallel::clusterEvalQ(cl, require(glmnetLRC))
+  
+    # Export the required objects to the##  worker nodes
+    parallel::clusterExport(cl,
+                            c("dm",
+                              "tauVec",
+                              "n",
+                              "cvFolds",
+                              "lossMat",
+                              "verbose"),
+                            envir = environment())
+    
     # Excecute the training in parallel
-    pe <- Smisc::parLapplyW(seedVec, trainWrapper, njobs = nJobs,
-                            expr = expression({library(bestglm)}),
-                            varlist =  c("dm",
-                                         "tauVec",
-                                         "n",
-                                         "cvFolds",
-                                         "lossMat",
-                                         "verbose"))
-
-
-    # Combine results into a data frame
-    parmEstimates <- Smisc::list2df(pe, row.names = 1:cvReps)
-
+    parmEstimates <- Smisc::list2df(parallel::parLapply(cl, seedVec, trainWrapper),
+                                    row.names = 1:cvReps)
+  
+    # Now stop the cluster
+    stopCluster(cl)
+  
   }
 
   ################################################################################
   # Single thread
   ################################################################################
-
+  
   else {
 
     parmEstimates <- Smisc::list2df(lapply(seedVec, trainWrapper),
@@ -333,7 +343,7 @@ LRCbestsubsets <- function(truthLabels, predictors, lossMat,
 
   # Fit the model using the aggregate parameters
   bestsubsetsFinal <- bestglm::bestglm(dm, weights = weight, family = binomial, ...)$BestModel
-
+                         
   # Return the optimal parameters to make graphical output
   bestsubsetsFinal$tau <- median(parmEstimates$tau)
 
@@ -384,7 +394,7 @@ print.LRCbestsubsets <- function(LRCbestsubsets_object) {
 ##'
 ##' @describeIn LRCbestsubsets Displays the overall optimized value of
 ##' \eqn{\tau} and the summary (using \code{summary.glm}) of the best logistic regression
-##' model.
+##' model. 
 ##'
 ##' @export
 
@@ -428,14 +438,14 @@ plot.LRCbestsubsets <- function(LRCbestsubsets_object, ...){
   plot(out)
 
   invisible(NULL)
-
+  
 } # plot.LRCbestsubsets
 
 ##' @method coef LRCbestsubsets
 ##'
-##' @describeIn LRCbestsubsets Calls the \code{\link{coef.glm}} method
+##' @describeIn LRCbestsubsets Calls the \code{\link{coef.glm}} method 
 ##' on the best subsets regression and returns the logistic regression coefficients
-##'
+##' 
 ##' @export
 
 coef.LRCbestsubsets <- function(LRCbestsubsets_object) {

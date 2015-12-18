@@ -82,7 +82,7 @@
 ##' @param masterSeed The random seed used to generate unique seeds for
 ##' each cross validation replicate.
 ##'
-##' @param nJobs The number of cores on the local host
+##' @param cores The number of cores on the local host
 ##' to use in parallelizing the training.  Parallelization
 ##' takes place at the \code{cvReps} level, i.e., if \code{cvReps = 1}, parallelizing would
 ##' do no good, whereas if \code{cvReps = 2}, each rep would be run separately in its
@@ -90,12 +90,16 @@
 ##' Parallelization is executed using \code{\link{parLapply}} from the
 ##' \pkg{parallel} package.
 ##'
+##' @param cluster An object that inherits from class \code{cluster} that is returned by
+##' \code{\link{makeCluster}} in package \pkg{parallel}. The \code{cores} argument is ignored when a
+##' \code{cluster} is provided.
+##'
 ##' @param estimateLoss A logical, set to \code{TRUE} to calculate the average loss estimated via
 ##' cross validation using the optimized parameters \eqn{(\alpha, \lambda, \tau)} to fit the elastic
 ##' net model for each cross validation fold.
-##' This requires another cross-validation pass through the data, but using only
+##' This requires another cross-validation pass through the data, but using only 
 ##' the optimal parameters to estimate the loss for each cross-validation replicate.
-##'
+##' 
 ##' @param verbose A logical, set to \code{TRUE} to receive messages regarding
 ##' the progress of the training algorithm.
 ##'
@@ -103,10 +107,9 @@
 ##' Returns an object of class \code{LRCglmnet}, which
 ##' inherits from classes \code{lognet} and \code{glmnet}.  It contains the
 ##' object returned by \code{\link{glmnet}} that has been fit to all the data using
-##' the optimal parameters \eqn{(\alpha, \lambda, \tau)}.
-## It also contains the following additional elements:
+##' the optimal parameters \eqn{(\alpha, \lambda, \tau)}. It also contains the following additional elements:
 ## TODO \describe{
-##'
+##' 
 ##'
 ## }
 ##'
@@ -189,7 +192,8 @@ LRCglmnet <- function(truthLabels, predictors, lossMat,
                       cvFolds = 5,
                       cvReps = 100,
                       masterSeed = 1,
-                      nJobs = 1,
+                      cores = 1,
+                      cluster = NULL,
                       estimateLoss = FALSE,
                       verbose = FALSE) {
 
@@ -219,12 +223,10 @@ LRCglmnet <- function(truthLabels, predictors, lossMat,
             cvReps > 0,
             is.numeric(masterSeed),
             length(masterSeed) == 1,
-            is.numeric(nJobs),
-            nJobs >= 1,
-            is.logical(estimateLoss),
-            length(estimateLoss) == 1,
             is.logical(verbose),
-            length(verbose) == 1)
+            length(verbose) == 1,
+            is.logical(estimateLoss),
+            length(estimateLoss) == 1)
 
   # Force the evaluation of the weight object immediately--this is IMPORTANT
   # because of R's lazy evaluation
@@ -243,10 +245,14 @@ LRCglmnet <- function(truthLabels, predictors, lossMat,
   # Report the number of observations
   if (verbose) {
     cat(n, "observations are available for fitting the LRCglmnet model\n")
-  }
+<<<<<<< HEAD
+
   ################################################################################
   # Set up cluster
   ################################################################################
+
+  cl <- createCluster(cvReps, masterSeed, cluster, cores)
+  
 
   # Load the glmnetLRC package on the worker nodes
   clusterEvalQ(cl$cluster, require(lrc))
@@ -261,6 +267,9 @@ LRCglmnet <- function(truthLabels, predictors, lossMat,
                   "lossMat",
                   "verbose"),
                 envir = environment())
+=======
+  }
+>>>>>>> dev
 
   # A wrapper function for calling single_LRCglmnet via parLapply
   trainWrapper <- function(seed,
@@ -286,34 +295,46 @@ LRCglmnet <- function(truthLabels, predictors, lossMat,
 
   # Get the vector of seeds that will ensure repeatability across threads
   seedVec <- createSeeds(masterSeed, cvReps)
-
+  
   ################################################################################
-  # Run in parallel
+  # Set up cluster
   ################################################################################
-  if (nJobs > 1) {
-
+  if (cores > 1) {
+  
+    cl <- createCluster(cvReps, cluster, cores)
+  
+    # Load the glmnetLRC package on the worker nodes
+    parallel::clusterEvalQ(cl, library(lrc))
+  
+    
+    # Export the required objects to the worker nodes
+    parallel::clusterExport(cl,
+                            c("d",
+                              "n",
+                              "cvFolds",
+                              "lossMat",
+                              "verbose"),
+                            envir = environment())
+  
+  
     # Execute the training in parallel
-    pe <- Smisc::parLapplyW(seedVec, trainWrapper,
-                            alphaVec = alphaVec,
-                            tauVec = tauVec,
-                            njobs = nJobs,
-                            expr = expression(library(lrc)),
-                            varlist = c("d",
-                                        "n",
-                                        "cvFolds",
-                                        "lossMat",
-                                        "verbose"))
-
-
-    # Collapse results to a data frame
-    parmEstimates <- Smisc::list2df(pe, row.names = 1:cvReps)
-
+    parmEstimates <-
+      Smisc::list2df(parallel::parLapply(cl, seedVec, trainWrapper,
+                                         alphaVec = alphaVec,
+                                         tauVec = tauVec),
+                     row.names = 1:cvReps)
+  
+    # Now stop the cluster
+    if (!estimateLoss) {
+      parallel::stopCluster(cl)
+    }
+    
   }
 
   ################################################################################
   # Single thread
   ################################################################################
-
+  
   else {
 
     parmEstimates <- Smisc::list2df(lapply(seedVec, trainWrapper,
@@ -322,8 +343,8 @@ LRCglmnet <- function(truthLabels, predictors, lossMat,
                                     row.names = 1:cvReps)
 
   }
+  
 
-CONTINUE HERE
   # The final parameter estimates will be the (alpha, lambda, tau) centroid in
   # the parameter estimates
 
@@ -356,21 +377,21 @@ CONTINUE HERE
 
   # Return the aggregated optimal parameters (gridVals)
   glmnetFinal$optimalParms <- finalParmEstimates
-
+  
   ################################################################################
   # If we are to estimate the loss by averaging the cross validation loss over
   # all the CV replicates, using the optimal parameters for each fit to a CV
   # training set.  Will use the same random seeds as before to constructe
   # the training/testing sets.
   ################################################################################
-
+  
   if (estimateLoss) {
 
     ################################################################################
     # Run on the cluster which was set up earlier
     ################################################################################
     if (cores > 1) {
-
+    
       # Execute the training in parallel
       lossEstimates <-
         Smisc::list2df(parallel::parLapply(cl, seedVec, trainWrapper,
@@ -379,18 +400,18 @@ CONTINUE HERE
                                            lambdaVec = lambdaVec,
                                            lambdaVal = finalParmEstimates[["lambda"]]),
                        row.names = 1:cvReps)
-
+    
       # Now stop the cluster
       parallel::stopCluster(cl)
-
+      
     }
-
+  
     ################################################################################
     # Single thread
     ################################################################################
-
+    
     else {
-
+  
       lossEstimates <-
         Smisc::list2df(lapply(seedVec, trainWrapper,
                               alphaVec = finalParmEstimates[["alpha"]],
@@ -448,7 +469,7 @@ print.LRCglmnet <- function(LRCglmnet_object) {
 
   # Add in the loss estimates if they are present
   if (!is.null(LRCglmnet_object$lossEstimates)) {
-
+      
     le <- matrix(c(mean(LRCglmnet_object$lossEstimates$ExpectedLoss),
                    sd(LRCglmnet_object$lossEstimates$ExpectedLoss)),
                  nrow = 1,
@@ -548,6 +569,6 @@ coef.LRCglmnet <- function(LRCglmnet_object) {
 
   # Remove the 0's
   return(coefs[coefs[,1] != 0,])
-
+  
 } # coef.LRCglmnet
 
