@@ -49,6 +49,7 @@
 ##' predicting correctly.
 ##'
 ##' @param predictors A matrix whose columns are the explanatory regression variables
+##  Are factors allowed?  Or only quantitative predictors?
 ##'
 ##' @param lossMat A loss matrix of class \code{lossMat}, produced by
 ##' \code{\link{lossMatrix}}, that specifies the penalties for classification errors.
@@ -87,8 +88,8 @@
 ##' takes place at the \code{cvReps} level, i.e., if \code{cvReps = 1}, parallelizing would
 ##' do no good, whereas if \code{cvReps = 2}, each rep would be run separately in its
 ##' own thread if \code{cores = 2}.
-##' Parallelization is executed using \code{\link{parLapply}} from the
-##' \pkg{parallel} package.
+##' Parallelization is executed using \code{\link{parLapplyW}} from the
+##' \pkg{Smisc} package.
 ##'
 ##' @param estimateLoss A logical, set to \code{TRUE} to calculate the average loss estimated via
 ##' cross validation using the optimized parameters \eqn{(\alpha, \lambda, \tau)} to fit the elastic
@@ -149,14 +150,14 @@
 ##' lM
 ##'
 ##' # Train the elastic net classifier (we don't run it here because it takes a long time)
-##' \dontrun{LRCglmnet_fit <- LRCglmnet(response, predictors, lM, cores = max(1, detectCores() - 1))}
+##' \dontrun{LRCglmnet_fit <- LRCglmnet(response, predictors, lM, nJobs = max(1, parallel::detectCores() - 1))}
 ##'
 ##' # We'll load the precalculated model fit instead
 ##' \donttest{data(LRCglmnet_fit)}
 ##' \dontshow{
 ##' # Here's a call to LRCglment() that will run quickly for testing purposes
-##' ncores <- max(1, detectCores() - 1)
-##' LRCglmnet_fit <- LRCglmnet(response, predictors, lM, cores = ncores,
+##' ncores <- max(1, parallel::detectCores() - 1)
+##' LRCglmnet_fit <- LRCglmnet(response, predictors, lM, nJobs = ncores,
 ##'                            alphaVec = c(1, 0.5), tauVec = c(0.3, 0.5, 0.7),
 ##'                            cvReps = ncores)
 ##' }
@@ -244,23 +245,6 @@ LRCglmnet <- function(truthLabels, predictors, lossMat,
   if (verbose) {
     cat(n, "observations are available for fitting the LRCglmnet model\n")
   }
-  ################################################################################
-  # Set up cluster
-  ################################################################################
-
-  # Load the glmnetLRC package on the worker nodes
-  clusterEvalQ(cl$cluster, require(lrc))
-
-  # Export the required objects to the worker nodes
-  clusterExport(cl$cluster,
-                c("d",
-                  "alphaVec",
-                  "tauVec",
-                  "n",
-                  "cvFolds",
-                  "lossMat",
-                  "verbose"),
-                envir = environment())
 
   # A wrapper function for calling single_LRCglmnet via parLapply
   trainWrapper <- function(seed,
@@ -292,18 +276,23 @@ LRCglmnet <- function(truthLabels, predictors, lossMat,
   ################################################################################
   if (nJobs > 1) {
 
+    # Object names that will be needed in the cluster
+    neededObjects <- c("d",
+                       "alphaVec",
+                       "tauVec",
+                       "n",
+                       "cvFolds",
+                       "lossMat",
+                       "verbose")
+
+
     # Execute the training in parallel
     pe <- Smisc::parLapplyW(seedVec, trainWrapper,
                             alphaVec = alphaVec,
                             tauVec = tauVec,
                             njobs = nJobs,
                             expr = expression(library(lrc)),
-                            varlist = c("d",
-                                        "n",
-                                        "cvFolds",
-                                        "lossMat",
-                                        "verbose"))
-
+                            varlist = neededObjects)
 
     # Collapse results to a data frame
     parmEstimates <- Smisc::list2df(pe, row.names = 1:cvReps)
@@ -323,7 +312,6 @@ LRCglmnet <- function(truthLabels, predictors, lossMat,
 
   }
 
-CONTINUE HERE
   # The final parameter estimates will be the (alpha, lambda, tau) centroid in
   # the parameter estimates
 
@@ -369,19 +357,20 @@ CONTINUE HERE
     ################################################################################
     # Run on the cluster which was set up earlier
     ################################################################################
-    if (cores > 1) {
+    if (nJobs > 1) {
 
       # Execute the training in parallel
       lossEstimates <-
-        Smisc::list2df(parallel::parLapply(cl, seedVec, trainWrapper,
-                                           alphaVec = finalParmEstimates[["alpha"]],
-                                           tauVec = finalParmEstimates[["tau"]],
-                                           lambdaVec = lambdaVec,
-                                           lambdaVal = finalParmEstimates[["lambda"]]),
+        Smisc::list2df(Smisc::parLapplyW(seedVec, trainWrapper,
+                                         alphaVec = finalParmEstimates[["alpha"]],
+                                         tauVec = finalParmEstimates[["tau"]],
+                                         lambdaVec = lambdaVec,
+                                         lambdaVal = finalParmEstimates[["lambda"]],
+                                         expr = expression(library(lrc)),
+                                         varlist = neededObjects,
+                                         njobs = nJobs),
                        row.names = 1:cvReps)
 
-      # Now stop the cluster
-      parallel::stopCluster(cl)
 
     }
 
@@ -502,7 +491,7 @@ plot.LRCglmnet <- function(LRCglmnet_object, ...){
                        diag.panel = panelHistogram,
                        main = paste("Optimal LRCglmnet parameters for",
                                     NROW(LRCglmnet_object$parms),
-                                    "cross validation replicates"))
+                                    "cross-validation replicates"))
 
 
   # Create the parms list
@@ -522,7 +511,7 @@ plot.LRCglmnet <- function(LRCglmnet_object, ...){
 ##' @method coef LRCglmnet
 ##'
 ##' @describeIn LRCglmnet Calls the \code{\link{predict}} method in \pkg{glmnet}
-##' on the fitted glmnet object and returns the a named vector of the logistic
+##' on the fitted glmnet object and returns a named vector of the logistic
 ##' regression coefficients using the optimal values of \eqn{\alpha} and \eqn{\lambda}.
 ##'
 ##' @export
