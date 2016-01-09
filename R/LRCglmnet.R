@@ -48,8 +48,9 @@
 ##' the second level of this factor should be the class you are most interested in
 ##' predicting correctly.
 ##'
-##' @param predictors A matrix whose columns are the explanatory regression variables
-##  Are factors allowed?  Or only quantitative predictors?
+##' @param predictors A matrix whose columns are the explanatory regression variables.  Note:
+##' factors are not currently supported.  To include a factor variable with n levels, it must be represented
+##' as n-1 dummary variables in the matrix.
 ##'
 ##' @param lossMat A loss matrix of class \code{lossMat}, produced by
 ##' \code{\link{lossMatrix}}, that specifies the penalties for classification errors.
