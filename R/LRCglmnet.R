@@ -67,6 +67,9 @@
 ##' @param tauVec A sequence of tau threshold values for the
 ##' logistic regression classifier.
 ##'
+##' @param intercept A logical indicating whether an intercept should be included in glmnet model,
+##' passed to the \code{intercept} argument of \code{\link{glmnet}}.
+##'
 ##' @param naFilter The maximum proportion of data observations that can be missing
 ##' for a given predictor
 ##' (a column in \code{predictors}). If, for a given predictor, the proportion of
@@ -187,6 +190,7 @@ LRCglmnet <- function(truthLabels, predictors, lossMat,
                       weight = rep(1, NROW(predictors)),
                       alphaVec = seq(0, 1, by = 0.2),
                       tauVec = seq(0.1, 0.9, by = 0.05),
+                      intercept = TRUE,
                       naFilter = 0.6,
                       cvFolds = 5,
                       cvReps = 100,
@@ -207,6 +211,8 @@ LRCglmnet <- function(truthLabels, predictors, lossMat,
             all(alphaVec <= 1) & all(alphaVec >= 0),
             is.numeric(tauVec),
             all(tauVec < 1) & all(tauVec > 0),
+            length(intercept) == 1,
+            is.logical(intercept),
             length(naFilter) == 1,
             is.numeric(naFilter),
             (naFilter < 1) & (naFilter > 0),
@@ -260,6 +266,7 @@ LRCglmnet <- function(truthLabels, predictors, lossMat,
                      d$weight,
                      alphaVec,
                      tauVec,
+                     intercept,
                      cvFolds,
                      seed,
                      n,
@@ -338,7 +345,8 @@ LRCglmnet <- function(truthLabels, predictors, lossMat,
   # Fit the model using the aggregate parameters
   glmnetFinal <- glmnet::glmnet(d$predictors, d$truthLabels, weights = d$weight,
                                 family = "binomial", lambda = lambdaVec,
-                                alpha = finalParmEstimates[["alpha"]])
+                                alpha = finalParmEstimates[["alpha"]],
+                                intercept = intercept)
 
   # Return the optimal parameters to make graphical output
   glmnetFinal$parms <- parmEstimates

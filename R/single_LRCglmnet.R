@@ -13,6 +13,7 @@ single_LRCglmnet <- function(truthLabels,
                              weight,
                              alphaVec,
                              tauVec,
+                             intercept,
                              cvFolds,
                              seed,
                              n,
@@ -41,7 +42,8 @@ single_LRCglmnet <- function(truthLabels,
                                 weights = weight[trainSet],
                                 family = "binomial",
                                 lambda = lambdaV,
-                                alpha = a)
+                                alpha = a,
+                                intercept = intercept)
 
     # Now test it
     out <- predLoss_LRCglmnet(glmnetFit, predictors[testSet,], truthLabels[testSet],
@@ -65,9 +67,10 @@ single_LRCglmnet <- function(truthLabels,
     # Get the lambdaVec for this particular alpha using all the data.
     if (is.null(lambdaVec)) {
       lambdaVec <- glmnet::glmnet(predictors, truthLabels, weights = weight,
-                                  family = "binomial", alpha = alpha)$lambda
+                                  family = "binomial", alpha = alpha,
+                                  intercept = intercept)$lambda
     }
-    
+
 
     # Now train/test over all the cv folds
     testAll <- Smisc::list2df(lapply(tFold, trainTest, a = alpha, lambdaV = lambdaVec))
