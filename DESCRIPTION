@@ -1,17 +1,19 @@
 Package: lrc
 Type: Package
-Title: lrc: Logistic Regression Classification (LRC)
-Version: 0.2.1
-Date: 2014-12-18
-Author: Landon Sego, Alexander Venzin
+Title: Logistic Regression Classification
+Version: 0.2.2
+Date: 2016-01-13
+Author: Landon H. Sego, Alexander M. Venzin, John A. Ramey
 Maintainer: Landon Sego <Landon.Sego@pnnl.gov>
 Description: Methods for fitting and predicting logistic regression classifiers
-    (LRC) with an arbitrary loss function using elastic net or best subsets
+    (LRC) with an arbitrary loss function using elastic net for variable selection.
 License: file LICENSE
 Imports:
     glmnet,
     plyr,
-    Smisc,
-    bestglm,
-    parallel
+    Smisc
+Suggests:
+    parallel,
+    testthat
 Roxygen: list(wrap = FALSE)
+RoxygenNote: 5.0.1

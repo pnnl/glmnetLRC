@@ -16,7 +16,7 @@
 \begin{document} 
 \SweaveOpts{concordance=TRUE}
 
-\title{{\tt lrc}: Elastic Net Logistic Regression Classifier Ensemble \\}
+\title{{\tt lrc}: Logistic regression classification (LRC) with an arbitrary loss function\\}
 \author{Landon Sego, Alex Venzin}
 \maketitle
 
@@ -36,8 +36,9 @@ traindata[1:5, 1:5]
 predictors <- as.matrix(traindata[,9:96])
 @ 
 
-\noindent {\tt LRCglmnet} requires a binary response variable, coded
-as class {\tt factor} in {\tt R}.  The order in which the response variable
+\noindent We fit the LRC model by calling the {\tt LRCglmnet()} function, which 
+requires a binary response variable, coded
+as a {\tt factor}.  The order in which the response variable
 is coded is important.  Specifically, the class we want to predict with
 the greatest sensitivity should be encoded as the second level. To illustrate how this
 is done, consider the Shewanella QC data, where the objective is to be
@@ -46,6 +47,8 @@ sensitive to predicting poor datasets.  Hence we code ``poor" last, as follows:
 response <- factor(traindata$Curated_Quality,
                    levels = c("good", "poor"),
                    labels = c("good", "poor"))
+
+levels(response)
 @ 
 \noindent Now we must define a discrete loss matrix. For the curation
 of dataset quality, predicting ``good" when the dataset is ``poor" is considerably 
@@ -61,7 +64,8 @@ lM <- lossMatrix(c("good","good","poor","poor"),
 lM
 @ 
 
-To train an elastic net model, the user needs to supply a handful of arguments to the {\tt LRCglmnet} function. The mandatory arguments are the true class labels, {\tt truthLabels} (which, for training, is the response variable), the set of predictor variables, {\tt predictors} (as a matrix or dataframe), and the loss matrix {\tt lossMat}. Noteworthy additional arguments include {\tt tauVec}, a vector of potential thresholds $\tau \in (0, 1)$ that are used to dichotomize the predicted probabilities from the logistic regression into two class labels; {\tt alphaVec}, a vector of potential values of the elastic net mixing parameter $\alpha \in [0, 1]$; {\tt cvFolds}, the number of cross validation folds; and {\tt seed}, the random number seed for partitioning the data into the cross validation folds. Keep in mind that $\alpha$ governs the tradeoff between the two regularization penalties. When $\alpha = 0$, the objective is $\ell_2$ regularization (ridge regression) and when $\alpha = 1$, the objective is $\ell_1$ regularization (lasso regression).   
+To train an elastic net model, the user needs to supply a handful of arguments to the {\tt LRCglmnet} function. The mandatory arguments are the true class labels, {\tt truthLabels} (which, in this case, is, is the {\tt response} object we created above), the matrix of predictor variables, {\tt predictors}, 
+and the loss matrix {\tt lossMat}. Noteworthy additional arguments include {\tt tauVec}, a vector of potential thresholds $\tau \in (0, 1)$ that are used to dichotomize the predicted probabilities from the logistic regression into two class labels; {\tt alphaVec}, a vector of potential values of the elastic net mixing parameter $\alpha \in [0, 1]$; {\tt cvFolds}, the number of cross validation folds; and {\tt seed}, the random number seed for partitioning the data into the cross validation folds. Keep in mind that $\alpha$ governs the tradeoff between the two regularization penalties. When $\alpha = 0$, the objective is $\ell_2$ regularization (ridge regression) and when $\alpha = 1$, the objective is $\ell_1$ regularization (lasso regression).   
 
 Be advised that heavier sampling of {\tt tauVec} or {\tt alphaVec} (i.e., sequences of greater length) leads to increased computation time, but more of the parameter space will be sampled, potentially leading to a better classifier. To get a step by step elicitation of the algorithm that generates the classifier, refer to the appendix.  We now train the elastic net logistic regression using the default settings for $\tau$ and the number of cross validation folds (which is 5) and restricting $\alpha = (0.5, 1)$:
 <<train>>=

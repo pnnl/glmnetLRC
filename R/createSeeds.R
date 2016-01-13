@@ -1,9 +1,8 @@
+################################################################################
+# Helper function to ensure repeatability of seeds across parallel threads
+################################################################################
 
 createSeeds <- function(masterSeed, cvReps) {
-
-  ################################################################################
-  # Ensure repeatability of seeds across threads
-  ################################################################################
 
   # Create the vector of seeds that will be used in the parallel call
   set.seed(masterSeed)

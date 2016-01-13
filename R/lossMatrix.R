@@ -27,12 +27,13 @@
 ##' # A 2x2 symmetric loss matrix
 ##' lossMatrix(c("a","a","b","b"), c("a","b","a","b"), c(0, 1, 5, 0))
 ##'
-##' # An unbalanced loss matrix (with a missing element)
-##' lossMatrix(c("a","a","b"), c("a","b","b"), c(0, 1, 0))
-##'
 ##' # A 3x2 asymmetric loss matrix
 ##' lossMatrix(rep(letters[1:3], each = 2), rep(letters[4:5], 3),
 ##'            c(0, 3, 2, 0, 1, 0))
+##' 
+##' # An unbalanced loss matrix with a missing element.
+##' # Not sure why one would want to do this.
+##' lossMatrix(c("a","a","b"), c("a","b","b"), c(0, 1, 0))
 
 lossMatrix <- function(truthLabels, predLabels, lossValues) {
 

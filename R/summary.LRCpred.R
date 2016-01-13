@@ -7,46 +7,55 @@
 ##' 
 ##' @method summary LRCpred
 ##'
-##' @param LRCpredObject an object of class \code{LRC_pred} returned by
-##' \code{\link{predict.LRCbestsubsets}} or \code{\link{predict.LRCglmnet}}.
+##' @param object an object of class \code{LRC_pred} returned by
+## \code{\link{predict.LRCbestsubsets}} or \code{\link{predict.LRCglmnet}}.
+##' \code{\link{predict.LRCglmnet}}.
+##'
+##' @param \dots Ignored
 ##'
 ##' @return
 ##' \itemize{
 ##' \item If \code{truthCol} was provided in the call to
-##' \code{\link{predict.LRCglmnet}} or \code{\link{predict.LRCbestsubsets}}, a
+## \code{\link{predict.LRCglmnet}} or \code{\link{predict.LRCbestsubsets}}, a
+##' \code{\link{predict.LRCglmnet}}, a
 ##' \code{data.frame} is returned with the sensitivity, specificity, false negative rate,
 ##' false positive rate, and accuracy for the class designated by the second level of
-##' the \code{truthLabels} argument in \code{\link{LRCglmnet}} or
-##' \code{\link{LRCbestsubsets}}.
+##' the \code{truthLabels} argument
+## in \code{\link{LRCglmnet}} or \code{\link{LRCbestsubsets}}.
+##' in \code{\link{LRCglmnet}}.
 ##'
-##' \item If \code{truthCol = NULL} in the call to \code{\link{predict.LRCglmnet}},
-##' or \code{\link{predict.LRCbestsubsets}}, a tabulation
-##' of the number of predictions for each class is returned.
+##' \item If \code{truthCol = NULL} in the call to
+## \code{\link{predict.LRCglmnet}}, or \code{\link{predict.LRCbestsubsets}},
+##' \code{\link{predict.LRCglmnet}}
+##' a tabulation of the number of predictions for each class is returned.
 ##' }
 ##'
 ##' @export
+##'
+##' @seealso See \code{\link{LRCglmnet}} and \code{\link{LRCglmnet_fit}}
+##' for examples.
 
-summary.LRCpred <- function(LRCpredObject) {
+summary.LRCpred <- function(object, ...) {
 
-  truthCol <- attributes(LRCpredObject)$truthCol
+  truthCol <- attributes(object)$truthCol
 
   # If there are any missing data in the PredictClass or the Truth class,
   # remove them
-  cc <- complete.cases(LRCpredObject[, c("PredictClass", truthCol)])
+  cc <- complete.cases(object[, c("PredictClass", truthCol)])
 
   if (any(!cc)) {
 
-    warning("'LRCpredObject' has ", sum(!cc),
+    warning("'object' has ", sum(!cc),
             " missing observation(s) which will be removed\n")
 
-    LRCpredObject <- LRCpredObject[cc,]
+    object <- object[cc,]
 
   }
 
   # Calculate the confusion matrix metrics
-  summ_out <- cmMetrics(LRCpredObject[, truthCol],
-                        LRCpredObject[,"PredictClass"],
-                        attributes(LRCpredObject)$classNames[2])
+  summ_out <- cmMetrics(object[, truthCol],
+                        object[,"PredictClass"],
+                        attributes(object)$classNames[2])
 
   return(as.data.frame(summ_out))
 

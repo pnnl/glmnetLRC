@@ -1,7 +1,7 @@
 ## Prepare data for fitting glmnetLRC model
 ##
 ## Removing missing observations and coluns with too much missing data
-## A helper function for \code{\link{glmnetLRC}
+## A helper function for \code{\link{glmnetLRC}}
 
 dataPrep <- function(truthLabels,
                      predictors,
