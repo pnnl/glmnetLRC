@@ -2,13 +2,21 @@
 
 \usepackage[left=1in, top=1in, right=1in, bottom=1in]{geometry}
 \usepackage{graphicx, color}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{amssymb}
 \usepackage{url}
+\usepackage{float}
 \usepackage[linesnumbered,ruled,vlined]{algorithm2e}
 \usepackage{framed}
 \usepackage{here}
 \usepackage{zi4}
 \usepackage{color}
 \usepackage{Sweave}
+
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator*{\argmax}{arg\,max}
+
 \renewcommand{\baselinestretch}{1.2}
 
 % \VignetteIndexEntry{lrc Example}
@@ -17,97 +25,70 @@
 \input{lrc-concordance}
 
 \title{{\tt lrc}: Logistic regression classification (LRC) with an arbitrary loss function\\}
-\author{Alex Venzin, Landon Sego}
+\author{Landon Sego, Alexander Venzin}
 \maketitle
 
 \section{Introduction}
 
 The {\tt lrc} package extends the {\tt glmnet} package by making it possible to train elastic net logistic 
-regression classifiers (LRC's) using a customized, discrete loss function.  This allows users to assign unique loss values 
-to false positive and false negative errors. This approach was originally implemented to automate the process 
-of determining the curation quality of mass spectrometry samples. Some of the data documented in \cite{thepaper} 
-will be used here to demonstrate how to train your own classifier. The elastic net parameter estimates are 
-obtained by maximizing a penalized likelihood function. The penalty is essentially a weighted average of the 
-ridge penalty ($\ell_2$ norm) and the lasso penalty ($\ell_1$ norm) of the regression parameters.  This approach 
-balances feature selection and model simplicity. 
+regression classifiers (LRC's) using a customized, discrete loss function.  This allows users to assign unique 
+loss values to false positive and false negative errors. This approach was originally implemented to automate the
+process of determining the curation quality of mass spectrometry samples. Some of the data documented in 
+\cite{thepaper} will be used here to demonstrate how to train your own classifier. The elastic net parameter
+estimates are obtained by maximizing a penalized likelihood function. The penalty is essentially a weighted average
+of the ridge penalty ($\ell_2$ norm) and the lasso penalty ($\ell_1$ norm) of the regression parameters.  This
+approach balances feature selection and model simplicity. 
+
+In the sections that follow, we show how to use the {\tt lrc} package to train LRC models, create diagnostic plots,
+extract coefficients, predict the binary class of new observations, and summarize the performance of those
+predictions. The details of the algorithms used by the package are provided in the Appendix.
 
 \section{Training}
 
 Let's begin by loading the package and the training data:
-\begin{Schunk}
-\begin{Sinput}
-> # Load the package
-> library(lrc)
-> # Load the VOrbitrap Shewanella QC data
-> data(traindata)
-> # A view of first five rows and first 12 columns
-> traindata[1:5, 1:12]
-\end{Sinput}
-\begin{Soutput}
-      Instrument_Category Instrument Dataset_ID Acq_Time_Start Acq_Length
-pt701           VOrbitrap VOrbiETD03     251690     12/31/2011         98
-pt702           VOrbitrap VOrbiETD03     251706       1/1/2012         98
-pt703           VOrbitrap VOrbiETD03     251887       1/4/2012         98
-pt704           VOrbitrap VOrbiETD03     252361      1/10/2012         98
-pt705           VOrbitrap VOrbiETD04     255284       2/2/2012         99
-                                          Dataset Dataset_Type Curated_Quality
-pt701 QC_Shew_11_06_col2A_30Dec11_Cougar_11-10-11      HMS-MSn            good
-pt702 QC_Shew_11_06_col2C_30Dec11_Cougar_11-10-11      HMS-MSn            good
-pt703  QC_Shew_11_06_Col2B_4Jan12_Cougar_11-10-11      HMS-MSn            good
-pt704   QC_Shew_11_06_col1_9Jan12_Cougar_11-10-09      HMS-MSn            good
-pt705  QC_Shew_11_06_Col1B_2Feb12_Cougar_11-10-09      HMS-MSn            good
-      XIC_WideFrac XIC_FWHM_Q1 XIC_FWHM_Q2 XIC_FWHM_Q3
-pt701     0.297090     19.3820     21.1900     24.3149
-pt702     0.305519     19.3785     21.1812     24.3262
-pt703     0.327858     19.7357     21.5033     24.5288
-pt704     0.305112     20.2610     22.4647     26.2807
-pt705     0.314518     23.1260     25.0415     28.3565
-\end{Soutput}
-\begin{Sinput}
-> # Here we select the predictor variables
-> predictors <- as.matrix(traindata[,9:96])
-\end{Sinput}
-\end{Schunk}
+% # <<data>>==
+% # # Load the package
+% # library(lrc)
+% # 
+% # # Load the VOrbitrap Shewanella QC data
+% # data(traindata)
+% # 
+% # # A view of first five rows and first 12 columns
+% # traindata[1:5, 1:12]
+% # 
+% # # Here we select the predictor variables
+% # predictors <- as.matrix(traindata[,9:96])
+% # @ 
 
-\noindent We fit the LRC model by calling the {\tt LRCglmnet()} function, which 
+\noindent We fit the LRC model by calling {\tt LRCglmnet()}, which 
 requires a binary response variable, coded
 as a {\tt factor}.  The order in which the response variable
 is coded is important.  Specifically, the class we want to predict with
 the greatest sensitivity should be encoded as the second level. To illustrate how this
 is done, consider the Shewanella QC data, where the objective is to be
 sensitive to predicting poor datasets.  Hence we code ``poor" last, as follows:
-\begin{Schunk}
-\begin{Sinput}
-> response <- factor(traindata$Curated_Quality,
-+                    levels = c("good", "poor"),
-+                    labels = c("good", "poor"))
-> levels(response)
-\end{Sinput}
-\begin{Soutput}
-[1] "good" "poor"
-\end{Soutput}
-\end{Schunk}
+% # <<data1>>=
+% # response <- factor(traindata$Curated_Quality,
+% #                    levels = c("good", "poor"),
+% #                    labels = c("good", "poor"))
+% # 
+% # levels(response)
+% # @ 
 \noindent Now we must define a discrete loss matrix. For the curation
 of dataset quality, predicting ``good" when the dataset is ``poor" is considerably 
 worse (Loss = 5) than predicting ``poor" when the dataset
 is ``good" (Loss = 1).  Correct predictions receive a penalty of zero loss:
 
-\begin{Schunk}
-\begin{Sinput}
-> lM <- lossMatrix(c("good","good","poor","poor"),
-+                  c("good","poor","good","poor"),
-+                  c(     0,     1,     5,     0))
-> # Observe the structure of the loss matrix
-> lM
-\end{Sinput}
-\begin{Soutput}
-           Predicted.good Predicted.poor
-Truth.good              0              1
-Truth.poor              5              0
-\end{Soutput}
-\end{Schunk}
+% <<data2>>=
+% lM <- lossMatrix(c("good","good","poor","poor"),
+%                  c("good","poor","good","poor"),
+%                  c(     0,     1,     5,     0))
+% 
+% # Observe the structure of the loss matrix
+% lM
+% @ 
 
-To train an elastic net model, the user needs to supply a handful of arguments to the {\tt LRCglmnet} function. 
+To train an elastic net model, the user needs to supply a handful of arguments to {\tt LRCglmnet()}. 
 The mandatory arguments are the true class labels, {\tt truthLabels} (which, in this case, is, is the {\tt response} 
 object we created above), the matrix of predictor variables, {\tt predictors}, 
 and the loss matrix {\tt lossMat}. Noteworthy additional arguments include {\tt tauVec}, a vector of potential 
@@ -123,32 +104,31 @@ increased computation time, but more of the parameter space will be sampled, pot
 classifier. A step by step description of the algorithm that generates the classifier is provided in the appendix.  
 We now train the elastic net logistic regression using the default settings for $\tau$ and the number of cross 
 validation folds (which is 5) and restricting $\alpha = (0.5, 1)$:
-\begin{Schunk}
-\begin{Sinput}
-> # Set the number of cores to be one less than the total available
-> ncores <- max(1, parallel::detectCores() - 1)
-> lrc_fit <- LRCglmnet(response, predictors, lM, nJobs = ncores,
-+                      alphaVec = c(1, 0.5), tauVec = c(0.3, 0.5, 0.7),
-+                      cvReps = ncores)
-> 
-\end{Sinput}
-\end{Schunk}
+% <<train>>=
+% # Set the number of cores to be one less than the total available
+% ncores <- max(1, parallel::detectCores() - 1)
+% 
+% lrc_fit <- LRCglmnet(response, predictors, lM, nJobs = ncores,
+%                      alphaVec = c(1, 0.5), tauVec = c(0.3, 0.5, 0.7),
+%                      cvReps = 2 * ncores, estimateLoss = TRUE)
+% 
+% @ 
 
-\noindent The call to {\tt LRCglmnet} uses cross validation to solve for the optimal parameter settings 
+\noindent The call to {\tt LRCglmnet()} uses cross validation to solve for the optimal parameter settings 
 $\left(\alpha, \lambda, \tau\right)$ that minimize the expected loss for the elastic net logistic regression 
 classifier. Printing the resulting object shows the median value for the parameters over the cross validation 
-replicates:
+replicates, as well as the average and standard deviation of the expected loss that is calculated for each
+cross validation replicate.
  
-\begin{Schunk}
-\begin{Sinput}
-> print(lrc_fit)
-\end{Sinput}
-\begin{Soutput}
-The optimal parameter values for the elastic net logistic regression fit: 
-     Df      %Dev alpha      lambda tau
-[1,] 29 0.8174827     1 0.004205331 0.3
-\end{Soutput}
-\end{Schunk}
+% <<checkdat>>==
+% print(lrc_fit)
+% @
+
+\noindent We can also extract the coefficients of the logistic regression model that was created using the 
+optimal values of $\alpha$ and $\lambda$ (which were shown by the call to the {\\tt print} method above):
+% <<getCoef>>==
+% coef(lrc_fit)
+% @
 
 \section{Prediction}
 
@@ -160,82 +140,40 @@ are available in {\tt newdata}, the column containing these true class labels ca
 {\tt newdata}.  These columns are indicated using {\tt keepCols}.   True labels are not required to make 
 predictions---but they are required to compute performance metrics (sensitivity, specificity, etc.) for the 
 elastic net logistic regression model. We begin by testing the classifer on the training data:
-\begin{Schunk}
-\begin{Sinput}
-> predictTrain <- predict(lrc_fit, traindata, truthCol = "Curated_Quality", keepCols = 1:2)
-> # Look at beginning of the predicted data.  Note the extra columns that were kept.
-> head(predictTrain)
-\end{Sinput}
-\begin{Soutput}
-      PredictClass Curated_Quality Instrument_Category Instrument
-pt701         good            good           VOrbitrap VOrbiETD03
-pt702         good            good           VOrbitrap VOrbiETD03
-pt703         good            good           VOrbitrap VOrbiETD03
-pt704         good            good           VOrbitrap VOrbiETD03
-pt705         <NA>            good           VOrbitrap VOrbiETD04
-pt706         poor            poor           VOrbitrap VOrbiETD02
-\end{Soutput}
-\begin{Sinput}
-> # Summarize the peformance of the new classifier in terms of a 
-> # variety of metrics:
-> summary(predictTrain)
-\end{Sinput}
-\begin{Soutput}
-                          poor
-sensitivity         0.96363636
-specificity         0.88118812
-false negative rate 0.03636364
-false positive rate 0.11881188
-accuracy            0.90314770
-\end{Soutput}
-\end{Schunk}
+% <<predictTrain>>=
+% 
+% predictTrain <- predict(lrc_fit, traindata, truthCol = "Curated_Quality", keepCols = 1:2)
+% 
+% # Look at beginning of the predicted data.  Note the extra columns that were kept.
+% head(predictTrain)
+% 
+% # Summarize the peformance of the new classifier in terms of a 
+% # variety of metrics:
+% summary(predictTrain)
+% @
 \noindent Note how the sensitivity for detecting poor datsets is considerably better than the specificity. 
 These results reflect a loss function that penalizes false negative errors associated with classifying a 
 "poor" curation quality as "good" more than false positive errors (classifying a "good" curation quality 
 as "poor"). 
 
 \noindent Now let's bring in some new data and examine the performance of the classifier:
-\begin{Schunk}
-\begin{Sinput}
-> # load the data for testing
-> data(testdata)
-> # Create table observing the true number of good/poor items 
-> with(testdata, table(Curated_Quality))
-\end{Sinput}
-\begin{Soutput}
-Curated_Quality
-good poor 
-  38   62 
-\end{Soutput}
-\begin{Sinput}
-> # Predict new data
-> predictTest <- predict(lrc_fit,testdata,
-+                        truthCol = "Curated_Quality")
-> # Look at the first few rows
-> head(predictTest)
-\end{Sinput}
-\begin{Soutput}
-     PredictClass Curated_Quality
-931          poor            good
-1449         good            good
-1467         good            good
-1468         good            good
-1470         good            good
-1501         good            good
-\end{Soutput}
-\begin{Sinput}
-> # Summarize the output of predicting the data we trained on 
-> summary(predictTest)
-\end{Sinput}
-\begin{Soutput}
-                          poor
-sensitivity         0.78688525
-specificity         0.94736842
-false negative rate 0.21311475
-false positive rate 0.05263158
-accuracy            0.84848485
-\end{Soutput}
-\end{Schunk}
+% <<predict>>==
+% # load the data for testing
+% data(testdata)
+% 
+% # Create table observing the true number of good/poor items 
+% with(testdata, table(Curated_Quality))
+% 
+% # Predict new data
+% predictTest <- predict(lrc_fit,testdata,
+%                        truthCol = "Curated_Quality")
+% 
+% # Look at the first few rows
+% head(predictTest)
+% 
+% # Summarize the output of predicting the data we trained on 
+% summary(predictTest)
+% @ 
 
 \section{Diagnostics}
 
@@ -247,17 +185,14 @@ scatterplot matrix.  Ideally, the distributions of the parameters will be tight 
 replicates, indicating that the choice of $\left(\alpha, \lambda, \tau\right)$ is stable regardless of
 the particular random partition used for cross-validation.
 
-\begin{figure}[H]
-\begin{center}
-\begin{Schunk}
-\begin{Sinput}
-> plot(lrc_fit)
-\end{Sinput}
-\end{Schunk}
-\includegraphics{lrc-plot}
-\caption{Scatterplot matrix of optimization parameters}
-\end{center}
-\end{figure}
+% \begin{figure}[H]
+% \begin{center}
+% <<plot, fig=TRUE, width=6, height=4>>=
+% plot(lrc_fit)
+% @
+% \caption{Scatterplot matrix of optimization parameters}
+% \end{center}
+% \end{figure}
 
 \nocite{*}
 \bibliography{lrc}
@@ -266,62 +201,137 @@ the particular random partition used for cross-validation.
 \newpage
 
 \section*{Appendix}
-We provide below a high-level explanation of the parameter selection algorithm:
+We present in detail the algorithm used by the {\tt lrc} package to identify the optimal parameter estimates
+for a logistic regression classifier (LRC) with variables selection implemented by an elastic net.  
 
-\begin{algorithm} \label{lrc}
+We begin by defining a
+number of variables.  Let $i = 1,\ldots,N$ index the observations in a training dataset. 
+Let $y_i = 1$ indicate that observation $i$ belongs to category ``1" and $y_i = 0$ indicate
+that it belongs to category ``0".  Per the logistic regression model, let  
+\begin{align}
+P(y_i = 1) \equiv \pi_i = \pi(\mathbf{x}_i, \boldsymbol{\beta}) = 
+\frac{\exp(\beta_0 + \boldsymbol{\beta}_1^T \mathbf{x}_i)}{1+\exp(\beta_0 + \boldsymbol{\beta}_1^T \mathbf{x}_i)}
+\end{align}
+\noindent where $\mathbf{x}_i = (x_1, \ldots x_p)^T$ is a vector of predictors, or covariates, that
+influence $\pi_i$, $\beta_0$ is an intercept, $\boldsymbol{\beta}_1 = (\beta_1, \ldots, \beta_p)^T$ is a 
+vector of  logistic regression coefficients, and for notational convenience, 
+$\boldsymbol{\beta} = (\beta_0, \beta_1, \ldots \beta_p)^T$. The estimate of $\boldsymbol{\beta}$ is influenced by 
+two other parameters, 
+$\alpha$ and $\lambda$.  The value of $\lambda > 0$ controls the weight of the
+penalty of the log-likelihoood function, while $\alpha$ controls the mixture of the ridge and lasso penalties.  
+The relationship between $\boldsymbol{\beta}$, $\alpha$, and $\lambda$ will be clarified below.
 
-\KwIn{$truthLabels$ = Labels associated with binary outcome, \\
-      $predictors$ = matrix of explanatory variables, \\
-      $lossMat$ = user defined discrete loss matrix,
-      $weight$ = vector of weights to fit elastic net model,
-      $alpha$ = vector of elastic net parameter values that balance between lasso and ridge regression,
-      $tauVec$ = vector of probability threshold values,
-      $cvFolds$ = cross-validation folds,
-      $seed$ = random number seed}
-      
-\KwOut{$parameters$ = $(\alpha, \lambda, \tau)$ triple that minimizes
-expected loss, $(\tau - 0.5)^{2}$, and $\lambda$ for a given cross validation replicate}
+Let $\hat\pi_i \equiv \pi \bigl( \mathbf{x}_i,\hat{\boldsymbol{\beta}}(\alpha,\lambda) \bigr)$ denote the predicted probability 
+that $y_i = 1$.  Then, if $\hat\pi_i > \tau$, where $0 < \tau < 1$, the LRC predicts 
+that $y_i = 1$.  To streamline the notation, let the predicted class of observation
+$i$ be written as $\hat{y}_i \equiv f \bigl( \mathbf{x}_i,\hat{\boldsymbol{\beta}}(\alpha,\lambda),\tau \bigr) = 
+I_{(\hat\pi_i > \tau)}$, and $f$ can be though of as the LRC.
 
-// For each unique combination of $\alpha$ and {\tt cvFolds}, generate a $\lambda$ 
-// sequence using {\tt glmnet}, fit an elastic net logisitc regression model, predict 
-// on validation set, and calculate the loss
+For the elastic net, the estimate $\hat{\boldsymbol{\beta}}$ is the $\boldsymbol{\beta}$
+that maximizes the penalized log likelihood function:
+\begin{align}
+\label{eq:penalized_likelihood}
+\hat{\boldsymbol{\beta}}(\alpha,\lambda) = \argmax_{\boldsymbol{\beta}} \Biggl[ \ell(\mathbf{x}_i,\boldsymbol{\beta}) - \lambda 
+\biggl( \frac{1-\alpha}{2} \sum_{i=1}^p \beta_i^2 + \alpha \sum_{i=1}^p |\beta_i| \biggr) \Biggr]
+\end{align}
+\noindent where the unpenalized likelihood is given by
+\begin{align}
+\ell(\mathbf{x}_i,\boldsymbol{\beta}) = \sum_{i=1}^N \bigl[ y_i \log(\pi_i) + (1 - y_i)\log(1-\pi_i) \bigr]
+\end{align}
+\noindent Parenthetically, $\alpha = 1$ is the lasso penalty, $\alpha = 0$ is the ridge regression penalty,
+and $0 < \alpha < 1$ is a mixture of the two. The penalty in \eqref{eq:penalized_likelihood} is the one
+specified in the documentation of {\tt glmnet()} in the {\tt glmnet} package.
 
-$ \textrm{Loss} \gets array() $\;
-$ \textrm{params} \gets array() $\;
-\For{$a \in \alpha$} {
-  \For{$ v \in cvFolds$} {
-  
-    $\lambda \gets glmnet(predictors, truthLabels, weight, a)\$\lambda $\;
-    $\textrm{model} \gets glmnet(predictors, truthLabels, weight, a, \lambda) $\;
-    $\textrm{LossCalc} \gets predict.loss(model, lossMat, \tau, a, \lambda,
-    predictors, truthLabels, weight) $\;
-    $\textrm{params} \gets array(a, \lambda, \tau, model, LossCalc) $\;
-    
-  }
-  
-  $ Loss[ \alpha ] \gets params $\; 
-  
-}
+The optimal values of $\alpha$, $\lambda$, and $\tau$ are obtained by minimizing the risk, or expected loss, of 
+the LRC, where the risk is calculated via cross-validation.  Calculating risk requires that we define a discrete 
+loss function, $L(y,\hat{y})$ as follows:
+\begin{table}[H]
+\begin{center}
+\begin{tabular}{c|cc}
+& $\hat{y} = 0$ & $\hat{y} = 1$ \\
+\hline
+$y = 0$ & $0$ & $\kappa_0$ \\
+$y = 1$ & $\kappa_1$ & $0$ \\
+\end{tabular}
+\end{center}
+\end{table}
+\noindent with $\kappa_0 > 0$ and $\kappa_1 > 0$ chosen to reflect the severity of false-positive and 
+false-negative errors, respectively.  Setting $\kappa_0 = \kappa_1 = 1$ results in the commonly used 0-1 loss
+function.
 
-// Calculate expected loss over all training folds \; 
+Cross-validation is accomplished by randomly partitioning the training data into $m$ folds (non-overlapping and
+exhaustive subsets), of the training data. The value of $m$ is controlled by the {\tt cvFolds} argument in 
+{\tt glmnet()}. Following the presentation of Hastie et al. \cite{Hastie}, let
+\begin{align}
+\delta:\{1,\ldots,N\} \rightarrow \{1, \ldots, m\}
+\end{align}
+\noindent map each observation in the training data to one of the folds.
+Let $f^{-k} \bigl( \mathbf{x},\hat{\boldsymbol{\beta}}(\alpha,\lambda),\tau \bigr)$ represent the LRC obtained by estimating 
+$\boldsymbol{\beta}$ using all the training data except the $k^{\text{th}}$ fold. The 
+cross-validation estimate of the risk is given by
+\begin{align}
+\label{eq:risk}
+R(\alpha,\lambda,\tau) = \frac{1}{N}\sum_{i=1}^N L \Bigl(y_i, f^{-\delta(i)} \bigl(\mathbf{x}_i,
+\hat{\boldsymbol{\beta}}(\alpha,\lambda),\tau \bigr) \Bigr)
+\end{align}
+\noindent Note that \eqref{eq:risk} is defined such that each observation in the training data receives 
+equal weight. The optimal estimates of $\alpha$, $\lambda$, and $\tau$ are those that minimize the risk:
+\begin{align}
+\hat\alpha,\hat\lambda,\hat\tau = \argmin_{\alpha,\lambda,\tau} R(\alpha,\lambda,\tau)
+\end{align}
+In practice, we calculate $(\hat\alpha$, $\hat\lambda$, $\hat\tau)$ by computing \eqref{eq:risk} over an irregular
+cube of discrete parameter values, defined by the combination of three vectors:  
+$\boldsymbol\alpha \times \boldsymbol\lambda \times \boldsymbol\tau$.
+The point in the cube that minimizes the risk becomes the estimate for $(\alpha, \lambda, \tau)$.
+The values of $\boldsymbol\alpha$ and $\boldsymbol\tau$ are specified by the {\tt alphaVec} and {\tt tauVec} arguments
+of {\tt LRCglmnet()}, respectively.  The values of $\boldsymbol\lambda$ depend on each $\alpha$ and are chosen algorithmically
+by {\tt glmnet()}, using the default values for the relevant arguments in {\tt glmnet()}.
 
-$\textrm{out} \gets array() $\;
+Once $\hat\alpha_j$, $\hat\lambda_j$, and $\hat\tau_j$ are identified for a given partition $j$ of the training data, 
+an overall estimate of $\boldsymbol\beta_j$ is obtained by
+solving \eqref{eq:penalized_likelihood} for the entire training data set using $\alpha = \hat\alpha_j$ and 
+$\lambda = \hat\lambda_j$ 
+to obtain $\hat{\boldsymbol\beta}(\hat\lambda_j,\hat\alpha_j)$.  Thus, the LRC obtained using partition $j$ of the 
+training data is given by $f \bigl( \mathbf{x},\hat{\boldsymbol{\beta}}(\hat\alpha_j,\hat\lambda_j),\hat\tau_j \bigr)$.  We can
+also estimate the risk using the overall parameter estimates by inserting $\hat\alpha_j$, $\hat\lambda_j$, and $\hat\tau_j$ 
+into
+\eqref{eq:risk} as follows:
+\begin{align}
+\label{eq:final_risk_j}
+R_j  = \frac{1}{N}\sum_{i=1}^N L \Bigl(y_i, f\bigl(\mathbf{x}_i,
+\hat{\boldsymbol{\beta}_j}(\hat\alpha_j,\hat\lambda_j), \hat\tau_j \bigr) \Bigr)
+\end{align}
 
-\For{$v \in cvFolds$}{
-  $Eloss \gets \frac{params[LossCalc[v]]}{\sum weight[v]} $\;
-  $out[v] \gets array(Eloss, params[\alpha [v]], params[\lambda [v]], params[\tau [v]], seed) $\; 
-}
+If we repeat the entire parameter estimation process for a different random partition, $j^\prime$, of the training data, we
+obtain obtain slightly different results.  To ensure the final LRC is robust to the random partitioning process, 
+we repeat the training process for multiple partitions, or cross-validation replicates, indexed by $j = 1,\ldots,J$.  
+The value of $J$ is controlled by the {\tt cvReps} argument in {\tt LRCglmnet()}.  For each replication, we obtain 
+$(\hat\alpha_j, \hat\lambda_j, \hat\tau_j)$, which has a corresponding risk, $R_j$, defined by \eqref{eq:final_risk_j}.  
+Calling the {\tt plot()} method
+on the object returned by {\tt LRCglmnet()} shows a pairs plot and univariate histogram of the
+various $(\hat\alpha_j, \hat\lambda_j, \hat\tau_j)$.  This plot illustrates the consistency of the tuning parameter estimates 
+across cross validation replicates.
 
-// sort the output based on objective $\textrm{min} Eloss + (\tau - 0.5)^{2} - \lambda$
+The final estimate of the tuning parameters is obtained by calculating the median of each one separately:
+\begin{align}
+(\hat\alpha^\star,\hat\lambda^\star,\hat\tau^\star) = \bigl(\text{median}_j(\hat\alpha_j), \text{median}_j(\hat\lambda_j),
+  \text{median}_j(\hat\tau_j) \bigr)
+\end{align}
+\noindent and then creating the final LRC by fitting all the training data (via \eqref{eq:penalized_likelihood})
+with those estimates: 
+\begin{align}
+f^\star \equiv f \bigl(\mathbf{x},\hat{\boldsymbol{\beta}_j}(\hat\alpha^\star,\hat\lambda^\star), \hat\tau^\star \bigr)
+\end{align}
+\noindent Calling the {\tt predict()} method on the object returned by {\tt LRCglmnet()} uses $f^\star$ to the classify
+new observations.
 
-$sorted.out \gets sort(out, by = Eloss + (\tau - 0.5)^{2} - \lambda) $\;
+The overall estimate of the risk (and its standard error) is obtained by calulating the mean and standard deviation 
+of the $R_j$'s in the usual way:
+\begin{align}
+\bar{R} = \frac{1}{J}\sum_{j=1}^J R_j & ~~ & \sigma_R = \sqrt{\frac{\sum_{j=1}^J(R_j - \bar{R})^2}{J-1}}
+\end{align}
 
-// optimal parameters will be first row entry
-	
-\Return{$parameters = sorted.out[1,]$}
-\caption{{\sc LRCglmnet} searches the parameter space of $(\alpha, \lambda, \tau)$ for the 
-combination that minimizes expected loss with respect to the user specified loss matrix.}
-\end{algorithm}  
+
 
 
 

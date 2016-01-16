@@ -1,0 +1,16 @@
+\begin{thebibliography}{1}
+
+\bibitem{thepaper}
+Brett~G. Amidan, Danny~J. Orton, Brian~L. LarMarche, Matthew~E. Monroe,
+  Ronald~J. Moore, Alexander~M. Venzin, Richard~D. Smith, Landon~H. Sego,
+  Mark~F. Tardiff, and Samuel~H. Payne.
+\newblock Signatures for mass spectrometry data quality.
+\newblock {\em Journal of Proteome Research}, 13(4):2215--2222, 2014.
+
+\bibitem{Hastie}
+Trevor Hastie, Robert Tibshirani, and J.~H. Friedman.
+\newblock {\em The Elements of Statistical Learning: Data Mining, Inference,
+  and Prediction}.
+\newblock Springer-Verlag, New York, 2 edition, 2008.
+
+\end{thebibliography}
