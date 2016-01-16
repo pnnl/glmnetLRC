@@ -36,7 +36,7 @@ loss values to false positive and false negative errors. This approach was origi
 process of determining the curation quality of mass spectrometry samples. Some of the data documented in 
 \cite{thepaper} will be used here to demonstrate how to train your own classifier. The elastic net parameter
 estimates are obtained by maximizing a penalized likelihood function. The penalty is essentially a weighted average
-of the ridge penalty ($\ell_2$ norm) and the lasso penalty ($\ell_1$ norm) of the regression parameters.  This
+of the ridge penalty ($L_2$ norm) and the lasso penalty ($L_1$ norm) of the regression parameters.  This
 approach balances feature selection and model simplicity. 
 
 In the sections that follow, we show how to use the {\tt lrc} package to train LRC models, create diagnostic plots,
@@ -325,10 +325,10 @@ f^\star \equiv f \bigl(\mathbf{x},\hat{\boldsymbol{\beta}_j}(\hat\alpha^\star,\h
 \noindent Calling the {\tt predict()} method on the object returned by {\tt LRCglmnet()} uses $f^\star$ to the classify
 new observations.
 
-The overall estimate of the risk, $\bar{R}$, and its standard error, $ is obtained by calulating the mean and standard deviation 
-of the $R_j$'s in the usual way:
+The overall estimate of the risk, $\bar{R}$, and its standard deviation, $\sigma_R$, is obtained by calculating 
+the mean and standard deviation of the $R_j$'s in the usual way:
 \begin{align}
-\bar{R} = \frac{1}{J}\sum_{j=1}^J R_j & ~~ & \sigma_R = \sqrt{\frac{\sum_{j=1}^J(R_j - \bar{R})^2}{J-1}}
+\bar{R} = \frac{1}{J}\sum_{j=1}^J R_j,  ~~~~ \sigma_R = \sqrt{\frac{\sum_{j=1}^J(R_j - \bar{R})^2}{J-1}}
 \end{align}
 
 
