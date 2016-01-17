@@ -18,7 +18,6 @@
 \DeclareMathOperator*{\argmax}{arg\,max}
 \DeclareMathOperator*{\median}{median}
 
-
 \renewcommand{\baselinestretch}{1.2}
 
 % \VignetteIndexEntry{lrc Example}
@@ -111,7 +110,7 @@ classifier.  We now train the elastic net logistic regression using restricted v
 # Set the number of cores to be one less than the total available
 ncores <- max(1, parallel::detectCores() - 1)
 
-# Fit the LRC model with 2 cross validation replicates per core
+# Fit the LRC model
 lrc_fit <- LRCglmnet(response, predictors, lM, nJobs = ncores,
                      cvFolds = 5, cvReps = 2 * ncores,
                      alphaVec = c(1, 0.5), tauVec = c(0.3, 0.5, 0.7),
@@ -119,9 +118,12 @@ lrc_fit <- LRCglmnet(response, predictors, lM, nJobs = ncores,
 
 @ 
 
-\noindent The call to {\tt LRCglmnet()} uses cross validation to solve for the optimal parameter settings 
-$\left(\alpha, \lambda, \tau\right)$ that minimize the expected loss for the elastic net logistic regression 
-classifier. Printing the resulting object shows the median value for the parameters over the cross validation 
+\noindent The call to {\tt LRCglmnet()} uses multiple replications of cross validation to solve for 
+the optimal tuning parameter settings $\left(\alpha, \lambda, \tau\right)$ that minimize the expected loss for 
+the elastic net logistic regression 
+classifier. An optimal estimate of the tuning parameters is obtained for each cross validation replicate. 
+The final estimate of each tuning parameter is the median value of the optimal estimates from the cross validation replcates.
+Printing the object returned by {\tt LRCglmnet()} shows the median value of the optimal tuning parameters over the cross validation 
 replicates, as well as the average and standard deviation of the expected loss values calculated for each
 cross validation replicate.
  
@@ -129,9 +131,8 @@ cross validation replicate.
 print(lrc_fit)
 @
 
-\noindent We can also extract the non-zero coefficients of the elastic net logistic regression 
-model that was created using the optimal values of $\alpha$ and $\lambda$ (which were shown by 
-the call to the {\tt print()} method above):
+\noindent We can also extract the coefficients of the logistic regression model that was created using the 
+optimal values of $\alpha$ and $\lambda$ (which were shown by the call to the {\tt print()} method above):
 <<getCoef>>==
 coef(lrc_fit)
 @
@@ -141,8 +142,8 @@ coef(lrc_fit)
 Now that the classifier has been properly trained and the optimal parameters have been identified, we are 
 interested in making predictions for new data observations. This requires the elastic net regression model 
 (the output from {\tt LRCglmnet}) and the set of new observations to be predicted, {\tt newdata}.  
-Note that {\tt newdata} must contain all the columns (with equivalent names) that were used to train the LRC.
-If true labels are available in {\tt newdata}, the column containing 
+Like other {\tt predict} methods in R, {\tt newdata} must contain columns with names that match the terms 
+in the LRC model object (the output of {\tt LRCglmnet()}).  If true labels are available in {\tt newdata}, the column containing 
 these true class labels can be specified via the 
 {\tt truthCol} argument. Additionally, one may wish to carry through a subset of the explanatory variables in 
 {\tt newdata}.  These columns are indicated using {\tt keepCols}.   True labels are not required to make 
@@ -152,14 +153,13 @@ elastic net logistic regression model. We begin by testing the classifer on the 
 # Predict the training data
 predictTrain <- predict(lrc_fit, traindata, truthCol = "Curated_Quality", keepCols = 1:2)
 
-# Look at beginning of the predicted data.  Note the extra columns that were 
-# kept:  "Instrument_Category" and "Instrument"
+# Look at beginning of the predicted data.  Note the extra columns that were kept.
 head(predictTrain)
 @ 
 \noindent We can summarize the performance of the classifier predictions with a call to the {\tt summary()} method.
 The performance metrics are oriented in terms of being sensitive to predicting a ``poor'' dataset.  Thus, a 
-false positive is predicting a dataset to be ``poor'' when it is ``good,'' and a false negative is predicting a 
-dataset to be ``good'' when it is ``poor.''  This orientation resulted from us setting ``poor'' as the second
+false positive is predicting a dataset is ``poor'' when it is ``good,'' and a false negative is predicting a 
+dataset is ``good'' when it is ``poor.''  This orientation results from us setting ``poor'' as the second
 level in {\tt response}.
 <<summarize>>=
 # Summarize the peformance of the new classifier in terms of a variety of metrics:
@@ -192,7 +192,7 @@ summary(predict(lrc_fit, testdata))
 \section{Diagnostics}
 
 \noindent Finally, we would like to get a sense of the distribution of the tuning parameters that were chosen 
-during the cross validation phase. The {\tt plot()} method produces a $3 \times 3$ scatterplot matrix of the optimal 
+during the cross validation phase. The {\tt plot} method produces a $3 \times 3$ scatterplot matrix of the optimal 
 triples $\left(\alpha, \lambda, \tau\right)$ associated with the selected regression model from each cross 
 validation replicate. The univariate distribution of each parameter is plotted on the diagonal of the 
 scatterplot matrix.  Ideally, the distributions of the parameters will be tight over the cross validation 
@@ -201,11 +201,10 @@ the particular random partition used for cross validation.
 
 \begin{figure}[H]
 \begin{center}
-<<plot, fig = TRUE, width = 6, height = 6>>=
+<<plot, fig=TRUE, width=2, height=2>>=
 plot(lrc_fit)
 @
-\caption{Scatterplot matrix of optimal tuning parameters.  Each point represents the optimal estimate of $(\alpha,\lambda,\tau)$
-for a given cross validation replicate.}
+\caption{Scatterplot matrix of optimal tuning parameters}
 \end{center}
 \end{figure}
 
@@ -215,11 +214,9 @@ for a given cross validation replicate.}
 
 \newpage
 
-\section{Appendix}
+\section*{Appendix}
 We present in detail the algorithm used by the {\tt lrc} package to identify the optimal parameter estimates
 for a logistic regression classifier (LRC) with variables selection implemented by an elastic net.  
-
-\subsection{The model}
 
 We begin by defining a
 number of variables.  Let $i = 1,\ldots,N$ index the observations in a training dataset. 
@@ -232,25 +229,21 @@ P(y_i = 1) \equiv \pi_i = \pi(\mathbf{x}_i, \boldsymbol{\beta}) =
 \noindent where $\mathbf{x}_i = (x_1, \ldots x_p)^T$ is a vector of predictors, or covariates, that
 influence $\pi_i$, $\beta_0$ is an intercept, $\boldsymbol{\beta}_1 = (\beta_1, \ldots, \beta_p)^T$ is a 
 vector of  logistic regression coefficients, and for notational convenience, 
-$\boldsymbol{\beta} = (\beta_0, \beta_1, \ldots \beta_p)^T$. 
-
-The estimate of the vector of regression parameters, $\boldsymbol{\beta}$, is influenced by two other tuning parameters, 
+$\boldsymbol{\beta} = (\beta_0, \beta_1, \ldots \beta_p)^T$. The estimate of $\boldsymbol{\beta}$ is influenced by 
+two other parameters, 
 $\alpha$ and $\lambda$.  For this reason, we will often write $\boldsymbol\beta$ as $\boldsymbol\beta(\alpha,\lambda)$.  
 The value of $\lambda > 0$ controls the weight of the
 penalty of the log-likelihoood function, while $\alpha$ controls the mixture of the ridge and lasso penalties.  
-The relationship between $\boldsymbol{\beta}$, $\alpha$, and $\lambda$ will be clarified below.  A final tuning parameter, 
-$\tau \in (0, 1)$, provides a threshold for the LRC such that if $\pi_i > \tau$, observation $i$ is predicted to belong
-to class ``1''.
-
-\subsection{Estimating the regression parameters}
+The relationship between $\boldsymbol{\beta}$, $\alpha$, and $\lambda$ will be clarified below.
 
 When we fit the elastic net logistic regression model to the data, we obtain the estimator 
 $\hat{\boldsymbol\beta}(\alpha,\lambda)$.  Therefore, 
 let $\hat\pi_i \equiv \pi \bigl( \mathbf{x}_i,\hat{\boldsymbol\beta}(\alpha,\lambda) \bigr)$ denote the predicted probability 
-that $y_i = 1$.  Then, if $\hat\pi_i > \tau$, the LRC predicts that $y_i = 1$, otherwise it predicts that $y_i = 0$.  
-It will be useful to represent the predicted class of observation
+that $y_i = 1$.  Then, if $\hat\pi_i > \tau$, where $0 < \tau < 1$, the LRC predicts 
+that $y_i = 1$.  It will be useful to represent the predicted class of observation
 $i$ as $\hat{y}_i \equiv f \bigl( \mathbf{x}_i,\hat{\boldsymbol{\beta}}(\alpha,\lambda),\tau \bigr) = 
 I_{(\hat\pi_i > \tau)}$, where $f$ can be thought of as the LRC.
+
 For the elastic net, the estimate $\hat{\boldsymbol{\beta}}$ is the $\boldsymbol{\beta}$
 that maximizes the penalized log likelihood function:
 \begin{align}
@@ -265,8 +258,6 @@ that maximizes the penalized log likelihood function:
 \noindent Parenthetically, $\alpha = 1$ is the lasso penalty, $\alpha = 0$ is the ridge regression penalty,
 and $0 < \alpha < 1$ is a mixture of the two. The penalty in \eqref{eq:penalized_likelihood} is the one
 specified in the documentation of {\tt glmnet()} in the {\tt glmnet} package.
-
-\subsection{Estimating the tuning parameters}
 
 The optimal values of the tuning parameters, $\alpha$, $\lambda$, and $\tau$, are obtained by minimizing 
 the risk, or expected loss, of 
@@ -285,62 +276,69 @@ $y = 1$ & $\kappa_1$ & $0$ \\
 \noindent with $\kappa_0 > 0$ and $\kappa_1 > 0$ chosen to reflect the severity of false-positive and 
 false-negative errors, respectively.  Setting $\kappa_0 = \kappa_1 = 1$ results in the commonly used 0-1 loss
 function.  In the {\tt lrc} package, $L$ is specified via a call to {\tt lossMatrix()}, and the result is passed to
-the {\tt lossMat} argument of {\tt LRCglmnet()}.
+the {\tt lossMatt} argument of {\tt LRCglmnet()}.
 
 Cross validation is accomplished by randomly partitioning the training data into $m$ folds (non-overlapping and
 exhaustive subsets) of the training data. The value of $m$ is controlled by the {\tt cvFolds} argument in 
 {\tt LRCglmnet()}. Following the presentation of Hastie et al. \cite{Hastie}, let
 \begin{align}
-\label{eq:cv_map}
 \delta:\{1,\ldots,N\} \rightarrow \{1, \ldots, m\}
 \end{align}
 \noindent map each observation in the training data to one of the folds.
-Let $\hat{\boldsymbol{\beta}}^{-k}(\alpha,\lambda)$ represent the estimate of $\boldsymbol\beta$ obtained by
-fitting the elastic net logistic regression model to all the training data except the $k^{\text{th}}$ fold.
-The cross validation estimate of the risk is given by
+Let $f^{-k} \bigl( \mathbf{x},\hat{\boldsymbol{\beta}}(\alpha,\lambda),\tau \bigr)$ represent the LRC obtained by estimating 
+$\boldsymbol{\beta}$ using all the training data except the $k^{\text{th}}$ fold. The 
+cross validation estimate of the risk is given by
 \begin{align}
 \label{eq:risk}
-R(\alpha,\lambda,\tau) = \frac{1}{N}\sum_{i=1}^N L \Bigl(y_i, f\bigl(\mathbf{x}_i,
-~\hat{\boldsymbol{\beta}}^{-\delta(i)}(\alpha,\lambda), ~\tau \bigr) \Bigr)
+R(\alpha,\lambda,\tau) = \frac{1}{N}\sum_{i=1}^N L \Bigl(y_i, f^{-\delta(i)} \bigl(\mathbf{x}_i,
+\hat{\boldsymbol{\beta}}(\alpha,\lambda),\tau \bigr) \Bigr)
 \end{align}
 \noindent Note that \eqref{eq:risk} is defined such that each observation in the training data receives 
 equal weight. The optimal estimates of the tuning parameters are those that minimize the risk:
 \begin{align}
 (\hat\alpha,\hat\lambda,\hat\tau) = \argmin_{\alpha,\lambda,\tau} R(\alpha,\lambda,\tau)
 \end{align}
-
 In practice, we calculate $(\hat\alpha$, $\hat\lambda$, $\hat\tau)$ by computing \eqref{eq:risk} over an irregular
 cube of discrete parameter values, defined by the combination of three vectors:  
 $\boldsymbol\alpha \times \boldsymbol\lambda \times \boldsymbol\tau$.
-The point in the cube that minimizes the risk becomes the estimate for $(\alpha, \lambda, \tau)$. In the event there
-are ties for the lowest risk for two or more points in the cube, points with $\tau$ nearer to $0.5$ are preferred, and
-if that still doesn't break the tie, points with larger values of $\lambda$ are preferred because they result in
-a more parsimonious model with fewer predictors.
+The point in the cube that minimizes the risk becomes the estimate for $(\alpha, \lambda, \tau)$.
 The values of $\boldsymbol\alpha$ and $\boldsymbol\tau$ are specified by the {\tt alphaVec} and {\tt tauVec} arguments
 of {\tt LRCglmnet()}, respectively.  The values of $\boldsymbol\lambda$ depend on each $\alpha$ and are chosen algorithmically
-by {\tt glmnet()}, using the default values for the relevant arguments in {\tt glmnet()} and using the entire training dataset.
+by {\tt glmnet()}, using the default values for the relevant arguments in {\tt glmnet()}.
 
-So far in this discussion, we have made reference to a single random partition of the training data into $m$ folds. 
-Naturally, the estimates of the tuning parameters depend on the partition. A different partition will yield different
-estimates of the tuning parameters.  To ensure the final LRC is robust to the random 
+So far in this discussion, we have made reference to a single random partition of the training data into $m$ folds.  However,
+the estimates of the tuning parameters will depend on the partition. To ensure the final LRC is robust to the random 
 partitioning process, we repeat the training process for multiple partitions, or cross validation replicates, 
 indexed by $j = 1,\ldots,J$.  The value of $J$ is controlled by the {\tt cvReps} argument in {\tt LRCglmnet()}.
 
-Calling the {\tt plot()} method
+Once $\hat\alpha_j$, $\hat\lambda_j$, and $\hat\tau_j$ are identified for partition $j$ of the training data, 
+an overall estimate of $\boldsymbol\beta_j$ is obtained by
+solving \eqref{eq:penalized_likelihood} for the entire training data set using $\alpha = \hat\alpha_j$ and $\lambda = \hat\lambda_j$ 
+to obtain $\hat{\boldsymbol\beta}(\hat\alpha_j,\hat\lambda_j)$.  The LRC obtained using partition $j$ of the
+training data is given by $f \bigl( \mathbf{x},\hat{\boldsymbol{\beta}}(\hat\alpha_j,\hat\lambda_j),\hat\tau_j \bigr)$.  We can
+also estimate the risk using the overall parameter estimates by inserting $\hat\alpha_j$, $\hat\lambda_j$, and $\hat\tau_j$ 
+into
+\eqref{eq:risk} as follows:
+\begin{align}
+\label{eq:final_risk_j}
+R_j  = \frac{1}{N}\sum_{i=1}^N L \Bigl(y_i, f\bigl(\mathbf{x}_i,
+\hat{\boldsymbol{\beta}}(\hat\alpha_j,\hat\lambda_j), \hat\tau_j \bigr) \Bigr)
+\end{align}
+
+Thus, for each cross validation replicate, we obtain 
+$(\hat\alpha_j, \hat\lambda_j, \hat\tau_j)$, which has a corresponding $\hat{\boldsymbol\beta}(\hat\alpha_j,\hat\lambda_j)$ 
+and risk estimate, $R_j$. Calling the {\tt plot()} method
 on the object returned by {\tt LRCglmnet()} shows a pairs plot and univariate histogram of the
 various $(\hat\alpha_j, \hat\lambda_j, \hat\tau_j)$.  This plot illustrates the consistency of the tuning parameter estimates 
 across cross validation replicates.
 
-\subsection{The final LRC model}
-
-Once $\hat\alpha_j$, $\hat\lambda_j$, and $\hat\tau_j$ are identified for all the cross validation replicates, 
-the final estimate of the tuning parameters is obtained by calculating the median of each one separately:
+The final estimate of the tuning parameters is obtained by calculating the median of each one separately:
 \begin{align}
 \label{eq:final_tuning}
 (\hat\alpha^\star,\hat\lambda^\star,\hat\tau^\star) = \bigl(\median_j(\hat\alpha_j), ~\median_j(\hat\lambda_j),
   ~\median_j(\hat\tau_j) \bigr)
 \end{align}
-\noindent The final estimate of $\boldsymbol\beta$ is obtained by fitting all the training 
+\noindent and then creating the final estimate of $\boldsymbol\beta$ by fitting all the training 
 data (via \eqref{eq:penalized_likelihood}) using the final estimates of the tuning parameters \eqref{eq:final_tuning}, 
 which gives rise to the final LRC:
 \begin{align}
@@ -350,22 +348,8 @@ f^\star \equiv f \bigl(\mathbf{x},\hat{\boldsymbol{\beta}}(\hat\alpha^\star,\hat
 new observations.  Likewise, calling the {\tt coef()} method on the object returned by {\tt LRCglmnet()} returns 
 $\hat{\boldsymbol\beta}(\hat\alpha^\star,\hat\lambda^\star)$.
 
-\subsection{The cross validation estimate of the risk}
-
-A measure of overall performance for the LRC is provided by the cross validation estimate of the risk. Extending
-\eqref{eq:cv_map}, let $\delta_1, \ldots, \delta_J$
-represent the partition mappings of the $J$ cross validation replicates.  For each replicate $j$, we obtain $(\hat\alpha_j, 
-\hat\lambda_j, \hat\tau_j)$ as defined by \eqref{eq:final_tuning}.  Using those tuning parameter estimates, a
-corresponding set of regression
-parameter estimates, $\hat{\boldsymbol{\beta}}^{-k}(\hat\alpha_j,\hat\lambda_j)$, are obtained using \eqref{eq:penalized_likelihood} 
-for each of the $m$ folds in replicate $j$.  The estimate of the risk for replicate $j$ is given by applying \eqref{eq:risk} as follows:
-\begin{align}
-\label{eq:final_risk_j}
-R_j  = \frac{1}{N}\sum_{i=1}^N L \Bigl(y_i, f\bigl(\mathbf{x}_i,
-~\hat{\boldsymbol{\beta}}^{-\delta(i)}(\hat\alpha_j,\hat\lambda_j),  ~\hat\tau_j \bigr) \Bigr)
-\end{align}
-The value of $R_j$ is calculated for $j = 1,\ldots,J$ and summarized using the mean and standard deviation
-in the usual way:
+The overall estimate of the risk, $\bar{R}$, and its standard deviation, $\sigma_R$, is obtained by calculating 
+the mean and standard deviation of the $R_j$'s in the usual way:
 \begin{align}
 \bar{R} = \frac{1}{J}\sum_{j=1}^J R_j,  ~~~~ \sigma_R = \sqrt{\frac{\sum_{j=1}^J(R_j - \bar{R})^2}{J-1}}
 \end{align}

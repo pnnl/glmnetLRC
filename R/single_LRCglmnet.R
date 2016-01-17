@@ -71,14 +71,11 @@ single_LRCglmnet <- function(truthLabels,
                                   intercept = intercept)$lambda
     }
 
-
     # Now train/test over all the cv folds
     testAll <- Smisc::list2df(lapply(tFold, trainTest, a = alpha, lambdaV = lambdaVec))
 
-
     # Add in the alpha
     testAll$alpha <- alpha
-
 
     return(testAll)
 
@@ -116,7 +113,7 @@ single_LRCglmnet <- function(truthLabels,
 
 
   # Searching for the minimum by sorting. Smaller expected loss is preferred
-  # In the event of a tie, smaller sqErrorTau is prferred (tau closer to 0.5)
+  # In the event of a tie, smaller sqErrorTau is preferred (tau closer to 0.5)
   # If still tied, larger values of lambda are prefered because they reduce the
   # number of predictors to create a more parsimonous model with fewer predictors
   dfData$sqErrorTau <- (dfData$tau - 0.5)^2

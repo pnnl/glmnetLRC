@@ -9,7 +9,7 @@
 ##' @details
 ##' For a given partition of the training data, cross validation is
 ##' performed to estimate the optimal values of
-##' \eqn{\alpha} (the mixing parameter of the L1 and L2 norms) and \eqn{\lambda}
+##' \eqn{\alpha} (the mixing parameter of the ridge and lasso penalties) and \eqn{\lambda}
 ##' (the regularization parameter), as well as the optimal threshold, \eqn{\tau},
 ##' which is used to dichotomize the probability predictions of the elastic net
 ##' logistic regression model into binary outcomes.
@@ -17,19 +17,18 @@
 ##' belongs to the second level of \code{truthLabels} exceeds \eqn{\tau}, it is
 ##' classified as belonging to that second level).  In this case, optimality is defined
 ##' as the set of parameters that minimize the risk, or expected loss, where the
-##' loss function is defined by \code{lossMat}.  The expected loss is calculated such
-##' that each observation in the data receives equal weight, following equation 7.49
-##' from Hastie et al.
-##'
-##' \code{LRCglmnet} searches for the optimal values of \eqn{\alpha} and \eqn{\tau} by
+##' loss function created using \link{\code{lossMatrix}}.  The expected loss is calculated such
+##' that each observation in the data receives equal weight
+##' 
+##' \code{LRCglmnet()} searches for the optimal values of \eqn{\alpha} and \eqn{\tau} by
 ##' fitting the elastic net model at the points of the two-dimensional grid defined by
-##' \code{alphaVec} and \code{tauVec}.  For each of these points, the vector of
+##' \code{alphaVec} and \code{tauVec}.  For each value of \eqn{\alpha}, the vector of
 ##' \eqn{\lambda}
 ##' values is selected automatically by \code{\link{glmnet}} according to its default
-##' arguments.  Note that the \eqn{\lambda} vector depends on \eqn{\alpha}.
+##' arguments.  
 ##' The expected loss is calculated for each \eqn{(\alpha,\lambda,\tau)} triple, and the
 ##' triple giving rise to the lowest risk designates the optimal model for a given
-##' cross-validation partition of the data.
+##' cross validation partition, or cross validation replicate, of the data.
 ##'
 ##' This process is repeated \code{cvReps} times, where each time a different random
 ##' partition of the data is created using its own seed, resulting in another
@@ -38,8 +37,7 @@
 ##' The final elastic net logistic regression classfier is given by fitting the regression
 ##' coefficients to all the training data using the optimal \eqn{(\alpha,\lambda,\tau)}.
 ##'
-##' In general, the methodology discussed here follows the Appendix material found in
-##' Amidan et al.
+##' The methodolgy is discussed in detail in the Appendix of the package vignette.
 ##'
 ##' @author Landon Sego, Alex Venzin
 ##'
@@ -105,8 +103,8 @@
 ##' @param estimateLoss A logical, set to \code{TRUE} to calculate the average loss estimated via
 ##' cross validation using the optimized parameters \eqn{(\alpha, \lambda, \tau)} to fit the elastic
 ##' net model for each cross validation fold.
-##' This requires another cross-validation pass through the data, but using only
-##' the optimal parameters to estimate the loss for each cross-validation replicate.
+##' This requires another cross validation pass through the data, but using only
+##' the optimal parameters to estimate the loss for each cross validation replicate.
 ##'
 ##' @param verbose A logical, set to \code{TRUE} to receive messages regarding
 ##' the progress of the training algorithm.
@@ -132,9 +130,6 @@
 ##' Signatures for Mass Spectrometry Data Quality.
 ##' Journal of Proteome Research. 13(4), 2215-2222.
 ##' \url{http://pubs.acs.org/doi/abs/10.1021/pr401143e}
-##'
-##' Hastie T, Tibshirani R, Friedman JH. 2008. The Elements of Statistical Learning:
-##' Data Mining, Inference, and Prediction. 2nd edition. Springer-Verlag.
 ##'
 ##' @seealso \code{\link{summary.LRCpred}}, a summary method for objects of class
 ##' \code{LRCpred}, produced by the \code{predict} method.
@@ -177,6 +172,9 @@
 ##' # Show the optimal parameter values
 ##' print(LRCglmnet_fit)
 ##'
+##' # Show the coefficients of the optimal model
+##' coef(LRCglmnet_fit)
+##'
 ##' # Show the plot of all the optimal parameter values for each cross validation replicate
 ##' plot(LRCglmnet_fit)
 ##'
@@ -192,7 +190,7 @@
 ##' summary(new)
 ##'
 ##' # If predictions are made without the an indication of the ground truth,
-##' # the summary is simpler:
+##' # the summary is necessarily simpler:
 ##' summary(predict(LRCglmnet_fit, testdata))
 
 LRCglmnet <- function(truthLabels, predictors, lossMat,
@@ -360,13 +358,13 @@ LRCglmnet <- function(truthLabels, predictors, lossMat,
   # Return the optimal parameters for graphical output
   glmnetFinal$parms <- parmEstimates
 
-  # Return the aggregated optimal parameters (gridVals)
+  # Return the finalized tuning parameters (median of the cross validation replicates)
   glmnetFinal$optimalParms <- finalParmEstimates
 
   ################################################################################
   # If we are to estimate the loss by averaging the cross validation loss over
   # all the CV replicates, using the optimal parameters for each fit to a CV
-  # training set.  Will use the same random seeds as before to constructe
+  # training set.  Will use the same random seeds as before to construct
   # the training/testing sets.
   ################################################################################
 
@@ -427,11 +425,11 @@ LRCglmnet <- function(truthLabels, predictors, lossMat,
 ##' @describeIn LRCglmnet Displays the overall optimized values of
 ##' \eqn{(\alpha, \lambda, \tau)}, with the corresponding degrees of freedom and
 ##' deviance for the model fit to all the data using the optimzed parameters.  If \code{estimateLoss = TRUE}
-##' when \code{LRCglmnet} was called, the mean and standard deviation of the expected loss are also shown.
+##' when \code{LRCglmnet()} was called, the mean and standard deviation of the expected loss are also shown.
 ##' In addition, all of this same information is returned invisibly as a matrix.
 ##'
-##' @param x For the \code{print} and \code{plot} methods:  an object of class \code{LRCglmnet}, returned
-##' by \code{LRCglmnet}, which contains the optimally-trained elastic net logistic regression classifier
+##' @param x For the \code{print} and \code{plot} methods:  an object of class \code{LRCglmnet} (returned
+##' by \code{LRCglmnet()}), which contains the optimally-trained elastic net logistic regression classifier.
 ##'
 ##' @export
 
@@ -472,11 +470,11 @@ print.LRCglmnet <- function(x, ...) {
 
 ##' @method plot LRCglmnet
 ##'
-##' @describeIn LRCglmnet Produces a pairs plot of the
-##' \eqn{(\alpha, \lambda, \tau)} triples and their univariate histograms that
-##' were identified as optimal for each of the monte-carlo replicates of the
-##' cross-validation partitioning.  This can provide a sense of how stable the estimates
-##' are across the cross-validation replicates.  
+##' @describeIn LRCglmnet Produces a pairs plot of the tuning parameters
+##' \eqn{(\alpha, \lambda, \tau)} and their univariate histograms that
+##' were identified as optimal for each of of the cross validation replicates.
+##' This can provide a sense of the stability of the estimates of the tuning
+##' parameters.
 ##'
 ##' @param \dots Additional arguments to default S3 method \code{\link{pairs}}, used only by the
 ##' \code{plot} method.  Ignored by the \code{print}, \code{coef}, and \code{predict} methods.
@@ -511,7 +509,7 @@ plot.LRCglmnet <- function(x, ...){
                        diag.panel = panelHistogram,
                        main = paste("Optimal LRCglmnet parameters for",
                                     NROW(x$parms),
-                                    "cross-validation replicates"))
+                                    "cross validation replicates"))
 
 
   # Create the parms list
@@ -531,12 +529,12 @@ plot.LRCglmnet <- function(x, ...){
 ##' @method coef LRCglmnet
 ##'
 ##' @describeIn LRCglmnet Calls the \code{\link{predict}} method in \pkg{glmnet}
-##' on the fitted glmnet object and returns a named vector of the logistic
+##' on the fitted glmnet object and returns a named vector of the non-zero elastic net logistic
 ##' regression coefficients using the optimal values of \eqn{\alpha} and \eqn{\lambda}.
 ##'
 ##' @param object For the \code{coef} and \code{predict} methods:  an object of class
-##' \code{LRCglmnet}, returned by \code{LRCglmnet},
-##' which contains the optimally-trained elastic net logistic regression classifier
+##' \code{LRCglmnet} (returned by \code{LRCglmnet()})
+##' which contains the optimally-trained elastic net logistic regression classifier.
 ##' 
 ##' @export
 
@@ -569,7 +567,7 @@ coef.LRCglmnet <- function(object, ...) {
 ##'
 ##' @method predict LRCglmnet
 ##' 
-##' @describeIn LRCglmnet Predict (or classify) new data using a fitted glmnet logistic regression classifier
+##' @describeIn LRCglmnet Predict (or classify) new data from an \code{LRCglmnet} object.
 ##' Returns an object of class \code{LRCpred} (which inherits
 ##' from \code{data.frame}) that contains the predicted class for each observation.  The columns indicated
 ##' by \code{truthCol} and \code{keepCols} are included if they were requested.

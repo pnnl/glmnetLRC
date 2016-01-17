@@ -94,6 +94,7 @@ predLoss_LRCglmnet <- function(glmnetFit, newData, truthLabels, lossMat,
     predLabels <- factor(x > tau, levels = c(FALSE, TRUE),
                          labels = glmnetFit$classnames)
 
+    # Calculate the loss
     cl <- calcLoss(truthLabels, predLabels, lossMat, weight = weight)
 
     return(cl)
