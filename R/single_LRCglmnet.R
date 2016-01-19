@@ -15,7 +15,7 @@ single_LRCglmnet <- function(truthLabels,
                              tauVec,
                              intercept,
                              cvFolds,
-                             seed,
+                             testFolds, # seed
                              n,
                              verbose,
                              lambdaVal = NULL,
@@ -35,6 +35,31 @@ single_LRCglmnet <- function(truthLabels,
 
     # Find the complement of the testSet
     trainSet <- sort(setdiff(1:n, testSet))
+
+    # Verify that in the training set we have at least 1 observation for each
+    # level of the binary response
+    tablePreds <- table(truthLabels[trainSet])
+
+    # Make sure we have 2 levels in the table.  This error should never occur, because
+    # we already checked that truthLabels is a factor with 2 levels
+    if (length(tablePreds) != 2) {
+      stop("Unexpected error:  For the training set containing these observations:\n",
+           paste(testSet, collapse = ", "),
+           "\nThe length of the table of truthLabels is not 2.  This should not have happened.")
+    }
+    
+    # Make sure both levels have at least one observation
+    if (!all(tablePreds > 0)) {
+
+      # Text message to more easily interpret the table
+      tableMsg <- paste("truthLabel level", names(tablePreds), "has", tablePreds, "observations")
+        
+      stop("For the training set containing these observations:\n",
+           paste(testSet, collapse = ", "),
+           "\nThere were no observations for at least one of the levels of 'truthLabels':\n",
+           paste(tableMsg, collapse = "\n"))
+
+    }
 
     # Train the elastic net regression
     glmnetFit <- glmnet::glmnet(predictors[trainSet,],
@@ -82,7 +107,7 @@ single_LRCglmnet <- function(truthLabels,
   } # cvForAlpha
 
   # Generate the test folds
-  testFolds <- Smisc::parseJob(n, cvFolds, random.seed = seed)
+#  testFolds <- Smisc::parseJob(n, cvFolds, random.seed = seed)
 
   # Test/train over the vector of alphas
   completeTest <- Smisc::list2df(lapply(alphaVec, function(x) cvForAlpha(x, testFolds)))
@@ -106,11 +131,10 @@ single_LRCglmnet <- function(truthLabels,
      }))
 
 
+  # Verify there are no NA's
   if (any(is.na(dfData))) {
-    warning("Unexpected NA values are present in the cross\n",
-             "validation results for replicate seed = ", seed, "\n")
+    warning("Unexpected NA values are present in the cross validation results")
   }
-
 
   # Searching for the minimum by sorting. Smaller expected loss is preferred
   # In the event of a tie, smaller sqErrorTau is preferred (tau closer to 0.5)
@@ -120,10 +144,11 @@ single_LRCglmnet <- function(truthLabels,
   gridMinimum <- Smisc::sortDF(dfData, ~ ExpectedLoss + sqErrorTau - lambda)[1,]
 
   # Add in the seed
-  gridMinimum$seed <- seed
+#  gridMinimum$seed <- seed
 
   # Return the optimal lambda, tau, and alpha for this particular seed
-  return(gridMinimum[,c("seed", "alpha", "lambda", "tau", "ExpectedLoss")])
+#  return(gridMinimum[,c("seed", "alpha", "lambda", "tau", "ExpectedLoss")])
+  return(gridMinimum[,c("alpha", "lambda", "tau", "ExpectedLoss")])
 
 } # single_LRCglmnet
 

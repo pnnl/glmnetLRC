@@ -17,7 +17,7 @@
 ##' belongs to the second level of \code{truthLabels} exceeds \eqn{\tau}, it is
 ##' classified as belonging to that second level).  In this case, optimality is defined
 ##' as the set of parameters that minimize the risk, or expected loss, where the
-##' loss function created using \link{\code{lossMatrix}}.  The expected loss is calculated such
+##' loss function created using \code{\link{lossMatrix}}.  The expected loss is calculated such
 ##' that each observation in the data receives equal weight
 ##' 
 ##' \code{LRCglmnet()} searches for the optimal values of \eqn{\alpha} and \eqn{\tau} by
@@ -37,7 +37,7 @@
 ##' The final elastic net logistic regression classfier is given by fitting the regression
 ##' coefficients to all the training data using the optimal \eqn{(\alpha,\lambda,\tau)}.
 ##'
-##' The methodolgy is discussed in detail in the Appendix of the package vignette.
+##' The methodology is discussed in detail in the Appendix of the package vignette.
 ##'
 ##' @author Landon Sego, Alex Venzin
 ##'
@@ -55,8 +55,9 @@
 ##' factors are not currently supported.  To include a factor variable with n levels, it must be represented
 ##' as n-1 dummy variables in the matrix.
 ##'
-##' @param lossMat A loss matrix of class \code{lossMat}, produced by
-##' \code{\link{lossMatrix}}, that specifies the penalties for classification errors.
+##' @param lossMat Either the character string "0-1", indicating 0-1 loss, or a loss
+##' matrix of class \code{lossMat}, produced by \code{\link{lossMatrix}}, that specifies
+##' the penalties for classification errors.
 ##'
 ##' @param weight The observation weights that are passed to \code{\link{glmnet}}.
 ##' The default value
@@ -82,14 +83,21 @@
 ##' not included in the elastic net model fitting.
 ##'
 ##' @param cvFolds The number of cross validation folds.
-##\code{cvFolds = NROW(predictors)}  <-- NEED to work on this
-## gives leave-one-out cross validation.
+##' \code{cvFolds = length(truthLabels)} gives leave-one-out (L.O.O.) cross validation,
+##' in which case \code{cvReps} is set to \code{1} and \code{stratify} is set to \code{FALSE}.
 ##'
 ##' @param cvReps The number of cross validation replicates, i.e., the number
 ##' of times to repeat the cross validation
-##' by randomly repartitioning the data into folds.
+##' by randomly repartitioning the data into folds. This argument is set to \code{1} for L.O.O
+##' cross validation, as there can only be one possible partition of the data.
 ##'
-##' @param masterSeed The random seed used to generate unique seeds for
+##' @param stratify A logical indicating whether stratified sampling should be used
+##' to ensure that observations from
+##' both levels of \code{truthLabels} are proportionally present in the cross validation
+##' training folds. This may be required for small or imbalanced data sets.  Note that
+##' stratification is not performed for L.O.O (when \code{cvFolds = length(truthLabels)}).
+##'
+##' @param masterSeed The random seed used to generate unique (and repeatable) seeds for
 ##' each cross validation replicate.
 ##'
 ##' @param nJobs The number of cores on the local host
@@ -116,11 +124,12 @@
 ##' the optimal parameters \eqn{(\alpha, \lambda, \tau)}.
 ##' It also contains the following additional elements:
 ##' \describe{
-##' \item{parms}{Contains the parameter estimates for \eqn{(\alpha, \lambda, \tau)} that minmize the expected
+##' \item{lossMat}{The loss matrix used as the criteria for selecting optimal tuning parameters}
+##' \item{parms}{A data fame that contains the tuning parameter estimates for \eqn{(\alpha, \lambda, \tau)} that minmize the expected
 ##' loss for each cross validation replicate.  Used by the \code{plot} method.}
-##' \item{optimalParms}{Contains the final estimates of \eqn{(\alpha, \lambda, \tau)}, calculated as the
+##' \item{optimalParms}{A named vector that contains the final estimates of \eqn{(\alpha, \lambda, \tau)}, calculated as the
 ##' element-wise median of \code{parms}}
-##' \item{lossEstimates}{If \code{estimateLoss = TRUE}, this element contains the expected loss
+##' \item{lossEstimates}{If \code{estimateLoss = TRUE}, this element contains a data frame with the expected loss
 ##' for each cross validation replicate}
 ##' }
 ##'
@@ -178,6 +187,15 @@
 ##' # Show the plot of all the optimal parameter values for each cross validation replicate
 ##' plot(LRCglmnet_fit)
 ##'
+##' # Extract the 'glmnet' object from the LRGglmnet fit
+##' glmnetObject <- extract(LRCglmnet_fit)
+##'
+##' # See how the glmnet methods operate on the object
+##' plot(glmnetObject)
+##'
+##' # Look at the coefficients for the optimal lambda
+##' coef(glmnetObject, s = LRCglmnet_fit$optimalParms["lambda"] )
+##' 
 ##' # Load the new observations
 ##' data(testdata)
 ##'
@@ -193,7 +211,8 @@
 ##' # the summary is necessarily simpler:
 ##' summary(predict(LRCglmnet_fit, testdata))
 
-LRCglmnet <- function(truthLabels, predictors, lossMat,
+LRCglmnet <- function(truthLabels, predictors,
+                      lossMat = "0-1",
                       weight = rep(1, NROW(predictors)),
                       alphaVec = seq(0, 1, by = 0.2),
                       tauVec = seq(0.1, 0.9, by = 0.05),
@@ -201,6 +220,7 @@ LRCglmnet <- function(truthLabels, predictors, lossMat,
                       naFilter = 0.6,
                       cvFolds = 5,
                       cvReps = 100,
+                      stratify = FALSE,
                       masterSeed = 1,
                       nJobs = 1,
                       estimateLoss = FALSE,
@@ -213,7 +233,6 @@ LRCglmnet <- function(truthLabels, predictors, lossMat,
             is.matrix(predictors),
             is.numeric(predictors),
             length(truthLabels) == NROW(predictors),
-            inherits(lossMat, "lossMat"),
             is.numeric(alphaVec),
             all(alphaVec <= 1) & all(alphaVec >= 0),
             is.numeric(tauVec),
@@ -232,15 +251,42 @@ LRCglmnet <- function(truthLabels, predictors, lossMat,
             is.numeric(cvReps),
             cvReps %% 1 == 0,
             cvReps > 0,
+            length(stratify) == 1,
+            is.logical(stratify),
             is.numeric(masterSeed),
             length(masterSeed) == 1,
             is.numeric(nJobs),
             nJobs >= 1,
+            nJobs %% 1 == 0,
             is.logical(estimateLoss),
             length(estimateLoss) == 1,
             is.logical(verbose),
             length(verbose) == 1)
 
+  # Check the loss matrix
+  lmGood <- FALSE
+  
+  if (is.character("lossMat")) {
+    if (length("lossMat") == 1) {
+      if ("lossMat" == "0-1") {
+          
+        # Create the 0-1 loss matrix
+        lossMat <- lossMatrix(rep(levels(truthLabels), each = 2),
+                              rep(levels(truthLabels), 2),
+                              c(0, 1, 1, 0))
+
+        lmGood <- TRUE
+        
+      }
+    }
+  }
+  else if (inherits(lossMat, "lossMat")) {
+    lmGood <- TRUE
+  }
+  if (!lmGood) {
+    stop("'lossMat' must be either '0-1' or an object of class 'lossMat' returned by 'lossMatrix()'")
+  }
+  
   # Force the evaluation of the weight object immediately--this is IMPORTANT
   # because of R's lazy evaluation
   force(weight)
@@ -261,7 +307,7 @@ LRCglmnet <- function(truthLabels, predictors, lossMat,
   }
 
   # A wrapper function for calling single_LRCglmnet() via Smisc::parLapplyW()
-  trainWrapper <- function(seed,
+  trainWrapper <- function(testFolds,
                            alphaVec = 1,
                            tauVec = 0.5,
                            lambdaVal = NULL,
@@ -275,7 +321,7 @@ LRCglmnet <- function(truthLabels, predictors, lossMat,
                      tauVec,
                      intercept,
                      cvFolds,
-                     seed,
+                     testFolds,
                      n,
                      verbose,
                      lambdaVal = lambdaVal,
@@ -283,9 +329,12 @@ LRCglmnet <- function(truthLabels, predictors, lossMat,
 
   } # trainWrapper
 
-  # Get the vector of seeds that will ensure repeatability across threads
-  seedVec <- createSeeds(masterSeed, cvReps)
+  # Generate the test sets that will be passed into the cv routines
+  testSets <- generateTestSets(d$truthLabels, cvFolds, cvReps, masterSeed, stratify)
 
+  # nJobs should not be larger than cvReps
+  nJobs <- min(nJobs, cvReps)
+  
   ################################################################################
   # Run in parallel
   ################################################################################
@@ -302,7 +351,7 @@ LRCglmnet <- function(truthLabels, predictors, lossMat,
 
 
     # Execute the training in parallel
-    pe <- Smisc::parLapplyW(seedVec, trainWrapper,
+    pe <- Smisc::parLapplyW(testSets, trainWrapper,
                             alphaVec = alphaVec,
                             tauVec = tauVec,
                             njobs = nJobs,
@@ -320,7 +369,7 @@ LRCglmnet <- function(truthLabels, predictors, lossMat,
 
   else {
 
-    parmEstimates <- Smisc::list2df(lapply(seedVec, trainWrapper,
+    parmEstimates <- Smisc::list2df(lapply(testSets, trainWrapper,
                                            alphaVec = alphaVec,
                                            tauVec = tauVec),
                                     row.names = 1:cvReps)
@@ -355,6 +404,9 @@ LRCglmnet <- function(truthLabels, predictors, lossMat,
                                 alpha = finalParmEstimates[["alpha"]],
                                 intercept = intercept)
 
+  # Add the loss matrix
+  glmnetFinal$lossMat <- lossMat
+  
   # Return the optimal parameters for graphical output
   glmnetFinal$parms <- parmEstimates
 
@@ -376,7 +428,7 @@ LRCglmnet <- function(truthLabels, predictors, lossMat,
     if (nJobs > 1) {
 
       # Execute the loss calculation in parallel
-      le <- Smisc::parLapplyW(seedVec, trainWrapper,
+      le <- Smisc::parLapplyW(testSets, trainWrapper,
                               alphaVec = finalParmEstimates[["alpha"]],
                               tauVec = finalParmEstimates[["tau"]],
                               lambdaVec = lambdaVec,
@@ -398,7 +450,7 @@ LRCglmnet <- function(truthLabels, predictors, lossMat,
     else {
 
       lossEstimates <-
-        Smisc::list2df(lapply(seedVec, trainWrapper,
+        Smisc::list2df(lapply(testSets, trainWrapper,
                               alphaVec = finalParmEstimates[["alpha"]],
                               tauVec = finalParmEstimates[["tau"]],
                               lambdaVec = lambdaVec,
@@ -477,7 +529,7 @@ print.LRCglmnet <- function(x, ...) {
 ##' parameters.
 ##'
 ##' @param \dots Additional arguments to default S3 method \code{\link{pairs}}, used only by the
-##' \code{plot} method.  Ignored by the \code{print}, \code{coef}, and \code{predict} methods.
+##' \code{plot} method.  Ignored by the \code{print}, \code{coef}, \code{predict}, and \code{extract} methods.
 ##' 
 ##' @export
 
@@ -532,8 +584,8 @@ plot.LRCglmnet <- function(x, ...){
 ##' on the fitted glmnet object and returns a named vector of the non-zero elastic net logistic
 ##' regression coefficients using the optimal values of \eqn{\alpha} and \eqn{\lambda}.
 ##'
-##' @param object For the \code{coef} and \code{predict} methods:  an object of class
-##' \code{LRCglmnet} (returned by \code{LRCglmnet()})
+##' @param object For the \code{coef}, \code{predict}, and \code{extract} methods:
+##' an object of class \code{LRCglmnet} (returned by \code{LRCglmnet()})
 ##' which contains the optimally-trained elastic net logistic regression classifier.
 ##' 
 ##' @export
@@ -680,4 +732,31 @@ predict.LRCglmnet <- function(object,
   return(output)
 
 } # predict.LRCglmnet
+
+
+# The generic extract method
+##' @export
+extract <- function (object, ...) {
+  UseMethod("extract", object)
+}
+
+##' @method extract LRCglmnet
+##'
+##' @describeIn LRCglmnet Extracts the \code{glmnet} object that was fit using the optimal parameter estimates of
+##' \eqn{(\alpha, \lambda)}.  Returns an object of class \code{"lognet" "glmnet"} that can be passed to various
+##' methods available in the \pkg{glmnet} package.
+##'
+##' @export
+
+extract.LRCglmnet <- function(object, ...) {
+
+  # Remove the parms, optimalParms, and lossEstimates elements of the object.  
+  out <- object[-which(names(object) %in% c("lossMat", "parms", "optimalParms", "lossEstimates"))]
+
+  # Remove it's LRGglmnet class.
+  class(out) <- class(object)[-which(class(object) == "LRCglmnet")]
+
+  return(out)
+  
+} # extract.LRCglmnet
 

@@ -1,8 +1,6 @@
-##' Logistic regression classification (LRC) with an arbitrary loss function
+##' Elastic net logistic regression classification (LRC) with an arbitrary loss function
 ##'
-##' Logistic regression classification (LRC) with an arbitrary loss function
-##' and variable selection via elastic net (glmnet)
-## or best subsets.
+##' Elastic net logistic regression classification (LRC) with an arbitrary loss function
 ##'
 ## \pkg{lrc} extends the \pkg{glmnet} and \pkg{bestglm}
 ##' \pkg{lrc} extends the \pkg{glmnet} 

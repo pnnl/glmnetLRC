@@ -1,7 +1,7 @@
 citHeader("To cite lrc in publications use:")
 
 citEntry(entry = "Manual",
-  title        = "{lrc: Logistic Regression Classification (LRC) with an arbitrary loss function in R}",
+  title        = "{lrc: Elastic Net Logistic Regression Classification (LRC) with an Arbitrary Loss Function in R}",
   author       = personList(as.person("Landon H. Sego"), as.person("Alexander M. Venzin"),as.person("John A. Ramey")),
   organization = "{Pacific Northwest National Laboratory}",
   address      = "Richland, WA",
@@ -9,6 +9,6 @@ citEntry(entry = "Manual",
   url          = "http://github.com/pnnl/lrc",
 
   textVersion  =
-  paste("Sego LH, Venzin AM, Ramey JA. 2016. lrc: Logistic Regression Classification (LRC) with an arbitrary loss",
-        "function in R Pacific Northwest National Laboratory. http://github.com/pnnl/Smisc.")
+  paste("Sego LH, Venzin AM, Ramey JA. 2016. lrc: Elastic Net Logistic Regression Classification (LRC) with an Arbitrary Loss",
+        "Function in R Pacific Northwest National Laboratory. http://github.com/pnnl/Smisc.")
 )

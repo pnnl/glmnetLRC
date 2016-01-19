@@ -1,17 +1,16 @@
-*  Be smart about when the number of requested cv replicates exceeds the number of possible folds?  
-   Does it just become a ton of resampling with replacement?
+*  Unit testing code (using all the various methods of partitioning), testing 0-1 lossMat, etc.
 
-*  For smaller data sets, should we implement a method to do stratified bootstrap samples for the CV
-   in order to ensure that each CV sample contains both the "true" and the "false" cases?  Or stratification based
-   on any set of variables?
+*  Vignette and documentation edits:  
+    in intro, make it clear that tuning parameters are chosen by minimizing loss via cross validation
+    elastic net is hyphenated
+    update likelihood to match the one shown in the glmnet documentation
+    make sure references to partitions make sense:  test sets are non-overlapping, but training sets are not.
+    discuss stratified sampling
 
-*  Warning and 'skip' mechanism for when model training fails for a particular fold
+* rename the package to glmnetLRC and the main function to glmnetLRC
 
-*  code for LOO, parallelize LOO
+* Intelligent stopifnot() call to give understandable messages
 
-*  Unit testing code
+* recreate LRCglmnet_fit
 
-*  Documentation for LRCglmnet
-
-*  Bring LRCbestsubsets up to speed
-
+* After testing, Remove commented code in single_LRCglmnet.R

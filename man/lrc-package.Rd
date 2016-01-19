@@ -3,10 +3,9 @@
 \docType{package}
 \name{lrc-package}
 \alias{lrc-package}
-\title{Logistic regression classification (LRC) with an arbitrary loss function}
+\title{Elastic net logistic regression classification (LRC) with an arbitrary loss function}
 \description{
-Logistic regression classification (LRC) with an arbitrary loss function
-and variable selection via elastic net (glmnet)
+Elastic net logistic regression classification (LRC) with an arbitrary loss function
 }
 \details{
 \pkg{lrc} extends the \pkg{glmnet} 
