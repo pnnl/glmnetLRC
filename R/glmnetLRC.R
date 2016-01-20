@@ -19,13 +19,13 @@
 ##' as the set of parameters that minimize the risk, or expected loss, where the
 ##' loss function created using \code{\link{lossMatrix}}.  The expected loss is calculated such
 ##' that each observation in the data receives equal weight
-##' 
+##'
 ##' \code{glmnetLRC()} searches for the optimal values of \eqn{\alpha} and \eqn{\tau} by
 ##' fitting the elastic net model at the points of the two-dimensional grid defined by
 ##' \code{alphaVec} and \code{tauVec}.  For each value of \eqn{\alpha}, the vector of
 ##' \eqn{\lambda}
 ##' values is selected automatically by \code{\link{glmnet}} according to its default
-##' arguments.  
+##' arguments.
 ##' The expected loss is calculated for each \eqn{(\alpha,\lambda,\tau)} triple, and the
 ##' triple giving rise to the lowest risk designates the optimal model for a given
 ##' cross validation partition, or cross validation replicate, of the data.
@@ -142,7 +142,7 @@
 ##'
 ##' @seealso \code{\link{summary.LRCpred}}, a summary method for objects of class
 ##' \code{LRCpred}, produced by the \code{predict} method.
-##' 
+##'
 ##' @examples
 ##' # Load the VOrbitrap Shewanella QC data from Amidan et al.
 ##' data(traindata)
@@ -171,13 +171,12 @@
 ##'
 ##' # Train the elastic net classifier (we don't run it here because it takes a long time)
 ##' \dontrun{
-##' loadNamespace("parallel")
-##' glmnetLRC_fit <- glmnetLRC(response, predictors, lM, nJobs = parallel::detectCores())
+##' glmnetLRC_fit <- glmnetLRC(response, predictors, lossMat = lM, nJobs = parallel::detectCores())
 ##' }
 ##'
 ##' # We'll load the precalculated model fit instead
 ##' data(glmnetLRC_fit)
-##' 
+##'
 ##' # Show the optimal parameter values
 ##' print(glmnetLRC_fit)
 ##'
@@ -195,7 +194,7 @@
 ##'
 ##' # Look at the coefficients for the optimal lambda
 ##' coef(glmnetObject, s = glmnetLRC_fit$optimalParms["lambda"] )
-##' 
+##'
 ##' # Load the new observations
 ##' data(testdata)
 ##'
@@ -269,14 +268,14 @@ glmnetLRC <- function(truthLabels, predictors,
   if (is.character(lossMat)) {
     if (length(lossMat) == 1) {
       if (lossMat == "0-1") {
-          
+
         # Create the 0-1 loss matrix
         lossMat <- lossMatrix(rep(levels(truthLabels), each = 2),
                               rep(levels(truthLabels), 2),
                               c(0, 1, 1, 0))
 
         lmGood <- TRUE
-        
+
       }
     }
   }
@@ -286,7 +285,7 @@ glmnetLRC <- function(truthLabels, predictors,
   if (!lmGood) {
     stop("'lossMat' must be either '0-1' or an object of class 'lossMat' returned by 'lossMatrix()'")
   }
-  
+
   # Force the evaluation of the weight object immediately--this is IMPORTANT
   # because of R's lazy evaluation
   force(weight)
@@ -334,7 +333,7 @@ glmnetLRC <- function(truthLabels, predictors,
 
   # nJobs should not be larger than cvReps
   nJobs <- min(nJobs, cvReps)
-  
+
   ################################################################################
   # Run in parallel
   ################################################################################
@@ -406,7 +405,7 @@ glmnetLRC <- function(truthLabels, predictors,
 
   # Add the loss matrix
   glmnetFinal$lossMat <- lossMat
-  
+
   # Return the optimal parameters for graphical output
   glmnetFinal$parms <- parmEstimates
 
@@ -440,7 +439,7 @@ glmnetLRC <- function(truthLabels, predictors,
       # Collapse results to a data frame
       lossEstimates <- Smisc::list2df(le, row.names = 1:cvReps)
 
-      
+
     }
 
     ################################################################################
@@ -530,7 +529,7 @@ print.glmnetLRC <- function(x, ...) {
 ##'
 ##' @param \dots Additional arguments to default S3 method \code{\link{pairs}}, used only by the
 ##' \code{plot} method.  Ignored by the \code{print}, \code{coef}, \code{predict}, and \code{extract} methods.
-##' 
+##'
 ##' @export
 
 plot.glmnetLRC <- function(x, ...){
@@ -547,7 +546,7 @@ plot.glmnetLRC <- function(x, ...){
       y <- h$counts
       y <- y / max(y)
       rect(breaks[-nB], 0, breaks[-1], y, col = "cyan", ...)
-      
+
   }
 
   # Default parameter values
@@ -587,7 +586,7 @@ plot.glmnetLRC <- function(x, ...){
 ##' @param object For the \code{coef}, \code{predict}, and \code{extract} methods:
 ##' an object of class \code{glmnetLRC} (returned by \code{glmnetLRC()})
 ##' which contains the optimally-trained elastic net logistic regression classifier.
-##' 
+##'
 ##' @export
 
 coef.glmnetLRC <- function(object, ...) {
@@ -618,7 +617,7 @@ coef.glmnetLRC <- function(object, ...) {
 ##' @importFrom glmnet predict.lognet
 ##'
 ##' @method predict glmnetLRC
-##' 
+##'
 ##' @describeIn glmnetLRC Predict (or classify) new data from an \code{glmnetLRC} object.
 ##' Returns an object of class \code{LRCpred} (which inherits
 ##' from \code{data.frame}) that contains the predicted class for each observation.  The columns indicated
@@ -750,13 +749,13 @@ extract <- function (object, ...) {
 
 extract.glmnetLRC <- function(object, ...) {
 
-  # Remove the lossMat, parms, optimalParms, and lossEstimates elements of the object.  
+  # Remove the lossMat, parms, optimalParms, and lossEstimates elements of the object.
   out <- object[-which(names(object) %in% c("lossMat", "parms", "optimalParms", "lossEstimates"))]
 
   # Remove it's LRGglmnet class.
   class(out) <- class(object)[-which(class(object) == "glmnetLRC")]
 
   return(out)
-  
+
 } # extract.glmnetLRC
 
