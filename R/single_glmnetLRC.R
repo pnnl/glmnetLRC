@@ -1,5 +1,5 @@
 ## Train an elastic net logistic regression classifier for a single cross validation
-## run.  A helper function for LRCglmnet()
+## run.  A helper function for glmnetLRC()
 
 # These two parameters are only used when estimating the loss
 # lambdaVal -- set this to a single value of lambda that will be used for the testing
@@ -7,7 +7,7 @@
 # lambdaVec -- a descending vector of lambdas which contains 'lambdaVal' that will be
 # used to more quickly fit the glmnet during training.
 
-single_LRCglmnet <- function(truthLabels,
+single_glmnetLRC <- function(truthLabels,
                              predictors,
                              lossMat,
                              weight,
@@ -71,7 +71,7 @@ single_LRCglmnet <- function(truthLabels,
                                 intercept = intercept)
 
     # Now test it
-    out <- predLoss_LRCglmnet(glmnetFit, predictors[testSet,], truthLabels[testSet],
+    out <- predLoss_glmnetLRC(glmnetFit, predictors[testSet,], truthLabels[testSet],
                               lossMat, tauVec = tauVec, weight = weight[testSet],
                               lambdaVec = lambdaVal)
 
@@ -150,5 +150,5 @@ single_LRCglmnet <- function(truthLabels,
 #  return(gridMinimum[,c("seed", "alpha", "lambda", "tau", "ExpectedLoss")])
   return(gridMinimum[,c("alpha", "lambda", "tau", "ExpectedLoss")])
 
-} # single_LRCglmnet
+} # single_glmnetLRC
 

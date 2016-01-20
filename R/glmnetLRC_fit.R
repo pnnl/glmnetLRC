@@ -1,30 +1,30 @@
-##' A LRCglmnet model fit object
+##' A glmnetLRC model fit object
 ##'
 ##' @description
 ##' This object is returned by the call
-##' \code{LRCglmnet_fit <- LRCglmnet(response, predictors, lM, cores = max(1, detectCores() - 1))}
-##' in the example of \code{\link{LRCglmnet}}. It is preserved here in the package
+##' \code{glmnetLRC_fit <- glmnetLRC(response, predictors, lM, cores = max(1, detectCores() - 1))}
+##' in the example of \code{\link{glmnetLRC}}. It is preserved here in the package
 ##' because it is time consuming to generate.
 ##'
 ##' @docType data
-##' @format A LRCglmnet object returned by \code{\link{LRCglmnet}}
-##' @name LRCglmnet_fit
+##' @format A glmnetLRC object returned by \code{\link{glmnetLRC}}
+##' @name glmnetLRC_fit
 ##' @examples
-##' # Load fitted LRCglmnet model
-##' data(LRCglmnet_fit)
+##' # Load fitted glmnetLRC model
+##' data(glmnetLRC_fit)
 ##'
 ##' # Show the optimal parameter values
-##' print(LRCglmnet_fit)
+##' print(glmnetLRC_fit)
 ##'
 ##' # Show the plot of all the optimal parameter values for each cross validation replicate
-##' plot(LRCglmnet_fit)
+##' plot(glmnetLRC_fit)
 ##'
 ##' # Load the new observations
 ##' data(testdata)
 ##'
 ##' # Use the trained model to make predictions about
 ##' # new observations for the response variable.
-##' new <- predict(LRCglmnet_fit, testdata, truthCol = "Curated_Quality", keepCols = 1:2)
+##' new <- predict(glmnetLRC_fit, testdata, truthCol = "Curated_Quality", keepCols = 1:2)
 ##' head(new)
 ##'
 ##' # Now summarize the performance of the model
@@ -32,5 +32,5 @@
 ##'
 ##' # If predictions are made without the an indication of the ground truth,
 ##' # the summary is simpler:
-##' summary(predict(LRCglmnet_fit, testdata))
+##' summary(predict(glmnetLRC_fit, testdata))
 NULL

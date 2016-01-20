@@ -1,4 +1,4 @@
-##' Elastic net logistic regression classifier (LRC) with arbitrary loss function
+##' Lasso and elastic-net logistic regression classifier (LRC) with arbitrary loss function
 ##'
 ##' This functions extends the \code{\link{glmnet}} and \code{\link{cv.glmnet}}
 ##' functions from the \pkg{glmnet}
@@ -20,7 +20,7 @@
 ##' loss function created using \code{\link{lossMatrix}}.  The expected loss is calculated such
 ##' that each observation in the data receives equal weight
 ##' 
-##' \code{LRCglmnet()} searches for the optimal values of \eqn{\alpha} and \eqn{\tau} by
+##' \code{glmnetLRC()} searches for the optimal values of \eqn{\alpha} and \eqn{\tau} by
 ##' fitting the elastic net model at the points of the two-dimensional grid defined by
 ##' \code{alphaVec} and \code{tauVec}.  For each value of \eqn{\alpha}, the vector of
 ##' \eqn{\lambda}
@@ -41,7 +41,7 @@
 ##'
 ##' @author Landon Sego, Alex Venzin
 ##'
-##' @rdname LRCglmnet
+##' @rdname glmnetLRC
 ##'
 ##' @export
 ##'
@@ -118,7 +118,7 @@
 ##' the progress of the training algorithm.
 ##'
 ##' @return
-##' Returns an object of class \code{LRCglmnet}, which
+##' Returns an object of class \code{glmnetLRC}, which
 ##' inherits from classes \code{lognet} and \code{glmnet}.  It contains the
 ##' object returned by \code{\link{glmnet}} that has been fit to all the data using
 ##' the optimal parameters \eqn{(\alpha, \lambda, \tau)}.
@@ -172,36 +172,36 @@
 ##' # Train the elastic net classifier (we don't run it here because it takes a long time)
 ##' \dontrun{
 ##' loadNamespace("parallel")
-##' LRCglmnet_fit <- LRCglmnet(response, predictors, lM, nJobs = parallel::detectCores())
+##' glmnetLRC_fit <- glmnetLRC(response, predictors, lM, nJobs = parallel::detectCores())
 ##' }
 ##'
 ##' # We'll load the precalculated model fit instead
-##' data(LRCglmnet_fit)
+##' data(glmnetLRC_fit)
 ##' 
 ##' # Show the optimal parameter values
-##' print(LRCglmnet_fit)
+##' print(glmnetLRC_fit)
 ##'
 ##' # Show the coefficients of the optimal model
-##' coef(LRCglmnet_fit)
+##' coef(glmnetLRC_fit)
 ##'
 ##' # Show the plot of all the optimal parameter values for each cross validation replicate
-##' plot(LRCglmnet_fit)
+##' plot(glmnetLRC_fit)
 ##'
 ##' # Extract the 'glmnet' object from the LRGglmnet fit
-##' glmnetObject <- extract(LRCglmnet_fit)
+##' glmnetObject <- extract(glmnetLRC_fit)
 ##'
 ##' # See how the glmnet methods operate on the object
 ##' plot(glmnetObject)
 ##'
 ##' # Look at the coefficients for the optimal lambda
-##' coef(glmnetObject, s = LRCglmnet_fit$optimalParms["lambda"] )
+##' coef(glmnetObject, s = glmnetLRC_fit$optimalParms["lambda"] )
 ##' 
 ##' # Load the new observations
 ##' data(testdata)
 ##'
 ##' # Use the trained model to make predictions about
 ##' # new observations for the response variable.
-##' new <- predict(LRCglmnet_fit, testdata, truthCol = "Curated_Quality", keepCols = 1:2)
+##' new <- predict(glmnetLRC_fit, testdata, truthCol = "Curated_Quality", keepCols = 1:2)
 ##' head(new)
 ##'
 ##' # Now summarize the performance of the model
@@ -209,9 +209,9 @@
 ##'
 ##' # If predictions are made without the an indication of the ground truth,
 ##' # the summary is necessarily simpler:
-##' summary(predict(LRCglmnet_fit, testdata))
+##' summary(predict(glmnetLRC_fit, testdata))
 
-LRCglmnet <- function(truthLabels, predictors,
+glmnetLRC <- function(truthLabels, predictors,
                       lossMat = "0-1",
                       weight = rep(1, NROW(predictors)),
                       alphaVec = seq(0, 1, by = 0.2),
@@ -303,17 +303,17 @@ LRCglmnet <- function(truthLabels, predictors,
 
   # Report the number of observations
   if (verbose) {
-    cat(n, "observations are available for fitting the LRCglmnet model\n")
+    cat(n, "observations are available for fitting the glmnetLRC model\n")
   }
 
-  # A wrapper function for calling single_LRCglmnet() via Smisc::parLapplyW()
+  # A wrapper function for calling single_glmnetLRC() via Smisc::parLapplyW()
   trainWrapper <- function(testFolds,
                            alphaVec = 1,
                            tauVec = 0.5,
                            lambdaVal = NULL,
                            lambdaVec = NULL) {
 
-    single_LRCglmnet(d$truthLabels,
+    single_glmnetLRC(d$truthLabels,
                      d$predictors,
                      lossMat,
                      d$weight,
@@ -465,27 +465,27 @@ LRCglmnet <- function(truthLabels, predictors,
   } # finish estimating loss
 
   # Assign the class
-  class(glmnetFinal) <- c("LRCglmnet", class(glmnetFinal))
+  class(glmnetFinal) <- c("glmnetLRC", class(glmnetFinal))
 
 
   return(glmnetFinal)
 
-} # LRCglmnet
+} # glmnetLRC
 
-##' @method print LRCglmnet
+##' @method print glmnetLRC
 ##'
-##' @describeIn LRCglmnet Displays the overall optimized values of
+##' @describeIn glmnetLRC Displays the overall optimized values of
 ##' \eqn{(\alpha, \lambda, \tau)}, with the corresponding degrees of freedom and
 ##' deviance for the model fit to all the data using the optimzed parameters.  If \code{estimateLoss = TRUE}
-##' when \code{LRCglmnet()} was called, the mean and standard deviation of the expected loss are also shown.
+##' when \code{glmnetLRC()} was called, the mean and standard deviation of the expected loss are also shown.
 ##' In addition, all of this same information is returned invisibly as a matrix.
 ##'
-##' @param x For the \code{print} and \code{plot} methods:  an object of class \code{LRCglmnet} (returned
-##' by \code{LRCglmnet()}), which contains the optimally-trained elastic net logistic regression classifier.
+##' @param x For the \code{print} and \code{plot} methods:  an object of class \code{glmnetLRC} (returned
+##' by \code{glmnetLRC()}), which contains the optimally-trained elastic net logistic regression classifier.
 ##'
 ##' @export
 
-print.LRCglmnet <- function(x, ...) {
+print.glmnetLRC <- function(x, ...) {
 
   # Find the index of the optimal lambda in the glmnet object
   indexMatch <- order(abs(x$lambda -
@@ -518,11 +518,11 @@ print.LRCglmnet <- function(x, ...) {
   # Invisibly return the optimal parms matrix
   invisible(op)
 
-} # print.LRCglmnet
+} # print.glmnetLRC
 
-##' @method plot LRCglmnet
+##' @method plot glmnetLRC
 ##'
-##' @describeIn LRCglmnet Produces a pairs plot of the tuning parameters
+##' @describeIn glmnetLRC Produces a pairs plot of the tuning parameters
 ##' \eqn{(\alpha, \lambda, \tau)} and their univariate histograms that
 ##' were identified as optimal for each of of the cross validation replicates.
 ##' This can provide a sense of the stability of the estimates of the tuning
@@ -533,7 +533,7 @@ print.LRCglmnet <- function(x, ...) {
 ##' 
 ##' @export
 
-plot.LRCglmnet <- function(x, ...){
+plot.glmnetLRC <- function(x, ...){
 
   ## put histograms on the diagonal
   panelHistogram <- function(x, ...) {
@@ -559,7 +559,7 @@ plot.LRCglmnet <- function(x, ...){
                        font.labels = 2,
                        bg = "light blue",
                        diag.panel = panelHistogram,
-                       main = paste("Optimal LRCglmnet parameters for",
+                       main = paste("Optimal glmnetLRC parameters for",
                                     NROW(x$parms),
                                     "cross validation replicates"))
 
@@ -575,33 +575,33 @@ plot.LRCglmnet <- function(x, ...){
 
   invisible(NULL)
 
-} # plot.LRCglmnet
+} # plot.glmnetLRC
 
 
-##' @method coef LRCglmnet
+##' @method coef glmnetLRC
 ##'
-##' @describeIn LRCglmnet Calls the \code{\link{predict}} method in \pkg{glmnet}
+##' @describeIn glmnetLRC Calls the \code{\link{predict}} method in \pkg{glmnet}
 ##' on the fitted glmnet object and returns a named vector of the non-zero elastic net logistic
 ##' regression coefficients using the optimal values of \eqn{\alpha} and \eqn{\lambda}.
 ##'
 ##' @param object For the \code{coef}, \code{predict}, and \code{extract} methods:
-##' an object of class \code{LRCglmnet} (returned by \code{LRCglmnet()})
+##' an object of class \code{glmnetLRC} (returned by \code{glmnetLRC()})
 ##' which contains the optimally-trained elastic net logistic regression classifier.
 ##' 
 ##' @export
 
-coef.LRCglmnet <- function(object, ...) {
+coef.glmnetLRC <- function(object, ...) {
 
   if (!inherits(object, "glmnet")) {
     stop("Unexpected error.  The 'object' does not inherit from 'glmnet'")
   }
 
   # Reset the class so that predicting methods work more easily
-  class(object) <- setdiff(class(object), "LRCglmnet")
+  class(object) <- setdiff(class(object), "glmnetLRC")
 
   # Verify the optimal lambda is in there (it should be)
   if (!(object$optimalParms[["lambda"]] %in% object$lambda)) {
-    stop("Unexpected error.  The optimal value of lambda was not in 'LRCglmnet_ojbect$lambda'")
+    stop("Unexpected error.  The optimal value of lambda was not in 'glmnetLRC_ojbect$lambda'")
   }
 
   # Get the matrix of coefs for the optimal lambda
@@ -612,14 +612,14 @@ coef.LRCglmnet <- function(object, ...) {
   # Remove the 0's
   return(coefs[coefs[,1] != 0,])
 
-} # coef.LRCglmnet
+} # coef.glmnetLRC
 
 
 ##' @importFrom glmnet predict.lognet
 ##'
-##' @method predict LRCglmnet
+##' @method predict glmnetLRC
 ##' 
-##' @describeIn LRCglmnet Predict (or classify) new data from an \code{LRCglmnet} object.
+##' @describeIn glmnetLRC Predict (or classify) new data from an \code{glmnetLRC} object.
 ##' Returns an object of class \code{LRCpred} (which inherits
 ##' from \code{data.frame}) that contains the predicted class for each observation.  The columns indicated
 ##' by \code{truthCol} and \code{keepCols} are included if they were requested.
@@ -637,7 +637,7 @@ coef.LRCglmnet <- function(object, ...) {
 ##'
 ##' @export
 
-predict.LRCglmnet <- function(object,
+predict.glmnetLRC <- function(object,
                               newdata,
                               truthCol = NULL,
                               keepCols = NULL,
@@ -645,7 +645,7 @@ predict.LRCglmnet <- function(object,
 
   # Verify it inherits from the lognet class
   if (!inherits(object, "lognet")) {
-    stop("Unexpected error:  Object of class 'LRCglmnet' does not inherit from 'lognet'")
+    stop("Unexpected error:  Object of class 'glmnetLRC' does not inherit from 'lognet'")
   }
 
   # Switching from column numbers to column names if necessary
@@ -686,7 +686,7 @@ predict.LRCglmnet <- function(object,
 
   # Get the original glmnet object
   glmnetObject <- object[-which(names(object) == "optimalParms")]
-  class(glmnetObject) <- setdiff(class(object), "LRCglmnet")
+  class(glmnetObject) <- setdiff(class(object), "glmnetLRC")
 
 
   # Get the numeric (probability) predictions using predict methods from glmnet package
@@ -731,7 +731,7 @@ predict.LRCglmnet <- function(object,
 
   return(output)
 
-} # predict.LRCglmnet
+} # predict.glmnetLRC
 
 
 # The generic extract method
@@ -740,23 +740,23 @@ extract <- function (object, ...) {
   UseMethod("extract", object)
 }
 
-##' @method extract LRCglmnet
+##' @method extract glmnetLRC
 ##'
-##' @describeIn LRCglmnet Extracts the \code{glmnet} object that was fit using the optimal parameter estimates of
+##' @describeIn glmnetLRC Extracts the \code{glmnet} object that was fit using the optimal parameter estimates of
 ##' \eqn{(\alpha, \lambda)}.  Returns an object of class \code{"lognet" "glmnet"} that can be passed to various
 ##' methods available in the \pkg{glmnet} package.
 ##'
 ##' @export
 
-extract.LRCglmnet <- function(object, ...) {
+extract.glmnetLRC <- function(object, ...) {
 
   # Remove the parms, optimalParms, and lossEstimates elements of the object.  
   out <- object[-which(names(object) %in% c("lossMat", "parms", "optimalParms", "lossEstimates"))]
 
   # Remove it's LRGglmnet class.
-  class(out) <- class(object)[-which(class(object) == "LRCglmnet")]
+  class(out) <- class(object)[-which(class(object) == "glmnetLRC")]
 
   return(out)
   
-} # extract.LRCglmnet
+} # extract.glmnetLRC
 

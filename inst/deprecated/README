@@ -1,0 +1,6 @@
+At an earlier point in the history of this package, I also wanted to include the capability to 
+create LRC's using best subsets.  But in the end, there wasn't time nor funding to really 
+get it done right.  So I've preserved the code here (which would need some work), if for 
+some reason in the future it becomes of interest.
+
+Landon Sego, 20 January 2016

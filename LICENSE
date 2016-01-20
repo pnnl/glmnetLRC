@@ -1,4 +1,4 @@
-lrc: Logistic Regression Classification (LRC)
+glmnetLRC:  Lasso and Elastic-Net Logistic Regression Classification with an Arbitrary Loss Function
 
 Copyright 2016, Battelle Memorial Institute
 All rights reserved.
@@ -27,8 +27,8 @@ written consent of Battelle.
 work performed using the software should include at least one of the following 
 citations as a reference:
 
-Sego LH, Venzin AM, Ramey JA. 2016. lrc:  Logistic Regression 
-Classification (LRC) with an arbitrary loss function in R. Pacific 
+Sego LH, Venzin AM, Ramey JA. 2016. glmnetLRC:  Lasso and Elastic-Net Logistic 
+Regression Classification (LRC) with an arbitrary loss function in R. Pacific 
 Northwest National Laboratory. http://github.com/pnnl/lrc.
 
 Amidan BG, Orton DJ, LaMarche BL, Monroe ME, Moore RJ,

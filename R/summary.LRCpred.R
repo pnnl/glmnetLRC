@@ -8,31 +8,27 @@
 ##' @method summary LRCpred
 ##'
 ##' @param object an object of class \code{LRC_pred} returned by
-## \code{\link{predict.LRCbestsubsets}} or \code{\link{predict.LRCglmnet}}.
-##' \code{\link{predict.LRCglmnet}}.
+##' \code{\link{predict.glmnetLRC}}.
 ##'
 ##' @param \dots Ignored
 ##'
 ##' @return
 ##' \itemize{
 ##' \item If \code{truthCol} was provided in the call to
-## \code{\link{predict.LRCglmnet}} or \code{\link{predict.LRCbestsubsets}}, a
-##' \code{\link{predict.LRCglmnet}}, a
+##' \code{\link{predict.glmnetLRC}}, a
 ##' \code{data.frame} is returned with the sensitivity, specificity, false negative rate,
 ##' false positive rate, and accuracy for the class designated by the second level of
 ##' the \code{truthLabels} argument
-## in \code{\link{LRCglmnet}} or \code{\link{LRCbestsubsets}}.
-##' in \code{\link{LRCglmnet}}.
+##' in \code{\link{glmnetLRC}}.
 ##'
 ##' \item If \code{truthCol = NULL} in the call to
-## \code{\link{predict.LRCglmnet}}, or \code{\link{predict.LRCbestsubsets}},
-##' \code{\link{predict.LRCglmnet}}
+##' \code{\link{predict.glmnetLRC}}
 ##' a tabulation of the number of predictions for each class is returned.
 ##' }
 ##'
 ##' @export
 ##'
-##' @seealso See \code{\link{LRCglmnet}} and \code{\link{LRCglmnet_fit}}
+##' @seealso See \code{\link{glmnetLRC}} and \code{\link{glmnetLRC_fit}}
 ##' for examples.
 
 summary.LRCpred <- function(object, ...) {

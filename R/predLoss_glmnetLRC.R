@@ -50,7 +50,7 @@
 # What happens if column names are not provided in newdata?
 ################################################################################
 
-predLoss_LRCglmnet <- function(glmnetFit, newData, truthLabels, lossMat,
+predLoss_glmnetLRC <- function(glmnetFit, newData, truthLabels, lossMat,
                                tauVec = seq(0.1, 0.9, by = 0.1), 
                                weight = rep(1, NROW(newData)), lambdaVec = NULL) {
 
@@ -128,4 +128,4 @@ predLoss_LRCglmnet <- function(glmnetFit, newData, truthLabels, lossMat,
   # each combination of tau and lambda
   return(Smisc::list2df(lapply(tauVec, calcLossOverTau)))
 
-} # predLoss_LRCglmnet
+} # predLoss_glmnetLRC
