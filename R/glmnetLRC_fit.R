@@ -2,9 +2,9 @@
 ##'
 ##' @description
 ##' This object is returned by the call
-##' \code{glmnetLRC_fit <- glmnetLRC(response, predictors, lossMat = lM, nJobs = parallel::detectCores())
-##' in the example of \code{\link{glmnetLRC}}. It is preserved here in the package
-##' because it is time consuming to generate.
+##' \code{glmnetLRC_fit <- glmnetLRC(response, predictors, lossMat = lM, estimateLoss = TRUE,
+##' nJobs = parallel::detectCores()) in the example of \code{\link{glmnetLRC}}. It is preserved
+##' here in the package because it is time consuming to generate.
 ##'
 ##' @docType data
 ##' @format A glmnetLRC object returned by \code{\link{glmnetLRC}}

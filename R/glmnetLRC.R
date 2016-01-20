@@ -171,7 +171,8 @@
 ##'
 ##' # Train the elastic net classifier (we don't run it here because it takes a long time)
 ##' \dontrun{
-##' glmnetLRC_fit <- glmnetLRC(response, predictors, lossMat = lM, nJobs = parallel::detectCores())
+##' glmnetLRC_fit <- glmnetLRC(response, predictors, lossMat = lM, estimateLoss = TRUE,
+##'                            nJobs = parallel::detectCores())
 ##' }
 ##'
 ##' # We'll load the precalculated model fit instead
@@ -186,7 +187,7 @@
 ##' # Show the plot of all the optimal parameter values for each cross validation replicate
 ##' plot(glmnetLRC_fit)
 ##'
-##' # Extract the 'glmnet' object from the LRGglmnet fit
+##' # Extract the 'glmnet' object from the glmnetLRC fit
 ##' glmnetObject <- extract(glmnetLRC_fit)
 ##'
 ##' # See how the glmnet methods operate on the object
@@ -206,7 +207,7 @@
 ##' # Now summarize the performance of the model
 ##' summary(new)
 ##'
-##' # If predictions are made without the an indication of the ground truth,
+##' # If predictions are made without an indication of the ground truth,
 ##' # the summary is necessarily simpler:
 ##' summary(predict(glmnetLRC_fit, testdata))
 
@@ -511,7 +512,7 @@ print.glmnetLRC <- function(x, ...) {
   }
 
   # Print the optimal parms
-  cat("The optimal parameter values for the elastic net logistic regression fit: \n")
+  cat("The optimal parameter values for the elastic-net logistic regression fit: \n")
   print(op)
 
   # Invisibly return the optimal parms matrix
