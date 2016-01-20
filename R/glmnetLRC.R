@@ -265,10 +265,10 @@ glmnetLRC <- function(truthLabels, predictors,
 
   # Check the loss matrix
   lmGood <- FALSE
-  
-  if (is.character("lossMat")) {
-    if (length("lossMat") == 1) {
-      if ("lossMat" == "0-1") {
+
+  if (is.character(lossMat)) {
+    if (length(lossMat) == 1) {
+      if (lossMat == "0-1") {
           
         # Create the 0-1 loss matrix
         lossMat <- lossMatrix(rep(levels(truthLabels), each = 2),
@@ -750,7 +750,7 @@ extract <- function (object, ...) {
 
 extract.glmnetLRC <- function(object, ...) {
 
-  # Remove the parms, optimalParms, and lossEstimates elements of the object.  
+  # Remove the lossMat, parms, optimalParms, and lossEstimates elements of the object.  
   out <- object[-which(names(object) %in% c("lossMat", "parms", "optimalParms", "lossEstimates"))]
 
   # Remove it's LRGglmnet class.

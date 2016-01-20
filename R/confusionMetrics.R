@@ -1,5 +1,5 @@
-# THIS IS SQM package stuff--eventually, I'll want to call these functions with the SQM
-# package
+# THIS IS SQM package stuff and was written by John Ramey. Eventually, I'll want to call these
+# functions with the SQM package
 
 ## Computes the confusion summary for a vector of classifications and a ground
 ## truth vector.

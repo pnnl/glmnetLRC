@@ -11,6 +11,4 @@
 
 * Intelligent stopifnot() call to give understandable messages
 
-* recreate LRCglmnet_fit
-
 * After testing, Remove commented code in single_LRCglmnet.R

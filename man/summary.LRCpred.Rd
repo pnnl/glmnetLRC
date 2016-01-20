@@ -8,21 +8,21 @@
 }
 \arguments{
 \item{object}{an object of class \code{LRC_pred} returned by
-\code{\link{predict.LRCglmnet}}.}
+\code{\link{predict.glmnetLRC}}.}
 
 \item{\dots}{Ignored}
 }
 \value{
 \itemize{
 \item If \code{truthCol} was provided in the call to
-\code{\link{predict.LRCglmnet}}, a
+\code{\link{predict.glmnetLRC}}, a
 \code{data.frame} is returned with the sensitivity, specificity, false negative rate,
 false positive rate, and accuracy for the class designated by the second level of
 the \code{truthLabels} argument
-in \code{\link{LRCglmnet}}.
+in \code{\link{glmnetLRC}}.
 
 \item If \code{truthCol = NULL} in the call to
-\code{\link{predict.LRCglmnet}}
+\code{\link{predict.glmnetLRC}}
 a tabulation of the number of predictions for each class is returned.
 }
 }
@@ -34,7 +34,7 @@ negative rate for predictions from logistic regression classifiers
 Landon Sego
 }
 \seealso{
-See \code{\link{LRCglmnet}} and \code{\link{LRCglmnet_fit}}
+See \code{\link{glmnetLRC}} and \code{\link{glmnetLRC_fit}}
 for examples.
 }
 
