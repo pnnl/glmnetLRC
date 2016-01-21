@@ -1,13 +1,8 @@
 *  Unit testing code (using all the various methods of partitioning), testing 0-1 lossMat, etc.
 
 *  Vignette and documentation edits:  
-    in intro, make it clear that tuning parameters are chosen by minimizing loss via cross validation
-    elastic net is hyphenated
-    update likelihood to match the one shown in the glmnet documentation
     make sure references to partitions make sense:  test sets are non-overlapping, but training sets are not.
     discuss stratified sampling
-
-* rename the package to glmnetLRC and the main function to glmnetLRC
 
 * Intelligent stopifnot() call to give understandable messages
 
