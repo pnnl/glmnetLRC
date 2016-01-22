@@ -88,13 +88,14 @@
 ##'
 ##' @param cvReps The number of cross validation replicates, i.e., the number
 ##' of times to repeat the cross validation
-##' by randomly repartitioning the data into folds. This argument is set to \code{1} for L.O.O
+##' by randomly repartitioning the data into folds and estimating the tuning parameters.
+##' This argument is set to \code{1} for L.O.O
 ##' cross validation, as there can only be one possible partition of the data.
 ##'
 ##' @param stratify A logical indicating whether stratified sampling should be used
 ##' to ensure that observations from
 ##' both levels of \code{truthLabels} are proportionally present in the cross validation
-##' training folds. This may be required for small or imbalanced data sets.  Note that
+##' folds. This may be required for small or imbalanced data sets.  Note that
 ##' stratification is not performed for L.O.O (when \code{cvFolds = length(truthLabels)}).
 ##'
 ##' @param masterSeed The random seed used to generate unique (and repeatable) seeds for

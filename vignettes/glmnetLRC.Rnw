@@ -101,7 +101,7 @@ and the loss matrix {\tt lossMat}. Noteworthy additional arguments include {\tt 
 thresholds $\tau \in (0, 1)$ that are used to dichotomize the predicted probabilities from the logistic regression 
 into two class labels; {\tt alphaVec}, a vector of potential values of the elastic-net mixing parameter 
 $\alpha \in [0, 1]$; {\tt cvFolds}, the number of cross validation folds; and {\tt masterSeed}, which controls 
-the partitioning the data into the cross validation folds. Keep in mind that $\alpha$ governs the tradeoff between 
+the partitioning of the data into the cross validation folds. Keep in mind that $\alpha$ governs the tradeoff between 
 the two regularization penalties. When $\alpha = 0$, $L_2$ regularization (the ridge penalty) is used,
 and when $\alpha = 1$, $L_1$ regularization (the lasso penality) is used.
 
@@ -294,8 +294,9 @@ false-negative errors, respectively.  Setting $\kappa_0 = \kappa_1 = 1$ results 
 function.  In the {\tt glmnetLRC} package, $L$ is specified via a call to {\tt lossMatrix()}, and the result is passed to
 the {\tt lossMat} argument of {\tt glmnetLRC()}.
 
-Cross validation is accomplished by randomly partitioning the training data into $m$ folds (non-overlapping and
-exhaustive subsets) of the training data. The value of $m$ is controlled by the {\tt cvFolds} argument in 
+Cross validation is accomplished by randomly partitioning the data into $m$ folds (non-overlapping and
+exhaustive subsets), where each fold is tested using a model trained on the remaining folds. 
+The value of $m$ is controlled by the {\tt cvFolds} argument in 
 {\tt glmnetLRC()}. Following the presentation of Hastie et al. \citeyear{Hastie}, let
 \begin{align}
 \label{eq:cv_map}
@@ -327,7 +328,7 @@ The values of $\boldsymbol\alpha$ and $\boldsymbol\tau$ are specified by the {\t
 of {\tt glmnetLRC()}, respectively.  The values of $\boldsymbol\lambda$ depend on each $\alpha$ and are chosen algorithmically
 by {\tt glmnet()}, using the default values for the relevant arguments in {\tt glmnet()} and using the entire training dataset.
 
-So far in this discussion, we have made reference to a single random partition of the training data into $m$ folds. 
+So far in this discussion, we have made reference to a single random partition of the data into $m$ folds. 
 Naturally, the estimates of the tuning parameters depend on the partition. A different partition will yield different
 estimates of the tuning parameters.  To ensure the final LRC is robust to the random 
 partitioning process, we repeat the training process for multiple partitions, or cross validation replicates, 

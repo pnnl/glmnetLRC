@@ -1,8 +1,7 @@
 *  Unit testing code (using all the various methods of partitioning), testing 0-1 lossMat, etc.
 
 *  Vignette and documentation edits:  
-    make sure references to partitions make sense:  test sets are non-overlapping, but training sets are not.
-    discuss stratified sampling
+    discuss stratified sampling?
 
 * Intelligent stopifnot() call to give understandable messages
 
