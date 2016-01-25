@@ -7,13 +7,14 @@
 # lambdaVec -- a descending vector of lambdas which contains 'lambdaVal' that will be
 # used to more quickly fit the glmnet during training.
 
-single_glmnetLRC <- function(truthLabels,
-                             predictors,
+single_glmnetLRC <- function(glmnetArgs,
+#                             truthLabels,
+#                             predictors,
                              lossMat,
-                             weight,
+                             lossWeight,
                              alphaVec,
                              tauVec,
-                             intercept,
+#                             intercept,
                              cvFolds,
                              testFolds, # seed
                              n,
@@ -21,11 +22,13 @@ single_glmnetLRC <- function(truthLabels,
                              lambdaVal = NULL,
                              lambdaVec = NULL) {
 
-  # lambdaVal & lambdaVal should both be provided or they should both be NULL
-  if (sum(is.null(lambdaVal), is.null(lambdaVec)) == 1) {
-    stop("'lambdaVal' and 'lambdaVal' should both be provided or they should both be NULL")
-  }
-
+  # Check arguments as needed
+  Smisc::stopifnotMsg(inherits(glmnetArgs, "glmnetArgs"),
+                      "'glmnetArgs' should inherit from class 'glmnetArgs'",
+                      # lambdaVal & lambdaVal should both be provided or they should both be NULL
+                      sum(is.null(lambdaVal), is.null(lambdaVec)) %in% c(0, 2),
+                      "'lambdaVal' and 'lambdaVec' should both be provided or they should both be NULL")
+    
   # Function to train and test over the CV folds
   trainTest <- function(testSet, a = 1, lambdaV = NULL) {
 
@@ -61,19 +64,34 @@ single_glmnetLRC <- function(truthLabels,
 
     }
 
+    # Modify the args to glmnet for the partition
+    glmnetArgsTrain <- c(glmnetArgs, list(lambda = lambdaV, alpha = a))
+    glmnetArgsTrain$x <- glmnetArgs$x[trainSet,]
+    glmnetArgsTrain$y <- glmnetArgs$y[trainSet]
+
+    if ("weights" %in% names(glmnetArgs)) {
+      glmnetArgsTrain$weights <- glmnetArgs$weights[trainSet]
+    }
+
     # Train the elastic net regression
-    glmnetFit <- glmnet::glmnet(predictors[trainSet,],
-                                truthLabels[trainSet],
-                                weights = weight[trainSet],
-                                family = "binomial",
-                                lambda = lambdaV,
-                                alpha = a,
-                                intercept = intercept)
+    glmnetFit <- do.call(glmnet::glmnet, glmnetArgsTrain)
+    
+    ## glmnetFit <- glmnet::glmnet(predictors[trainSet,],
+    ##                             truthLabels[trainSet],
+    ##                             weights = weight[trainSet],
+    ##                             family = "binomial",
+    ##                             lambda = lambdaV,
+    ##                             alpha = a,
+    ##                             intercept = intercept)
 
     # Now test it
-    out <- predLoss_glmnetLRC(glmnetFit, predictors[testSet,], truthLabels[testSet],
-                              lossMat, tauVec = tauVec, weight = weight[testSet],
+    out <- predLoss_glmnetLRC(glmnetFit, glmnetArgs$x[testSet,], glmnetArgs$y[testSet],
+                              lossMat, tauVec = tauVec, lossWeight = lossWeight[testSet],
                               lambdaVec = lambdaVal)
+    
+    ## out <- predLoss_glmnetLRC(glmnetFit, predictors[testSet,], truthLabels[testSet],
+    ##                           lossMat, tauVec = tauVec, lossWeight = lossWeight[testSet],
+    ##                           lambdaVec = lambdaVal)
 
     return(out)
 
@@ -91,9 +109,13 @@ single_glmnetLRC <- function(truthLabels,
 
     # Get the lambdaVec for this particular alpha using all the data.
     if (is.null(lambdaVec)) {
-      lambdaVec <- glmnet::glmnet(predictors, truthLabels, weights = weight,
-                                  family = "binomial", alpha = alpha,
-                                  intercept = intercept)$lambda
+
+      browser()
+      lambdaVec <- do.call(glmnet::glmnet, c(glmnetArgs, list(alpha = alpha)))$lambda
+    
+      ## lambdaVec <- glmnet::glmnet(predictors, truthLabels, weights = weight,
+      ##                             family = "binomial", alpha = alpha,
+      ##                             intercept = intercept)$lambda    
     }
 
     # Now train/test over all the cv folds

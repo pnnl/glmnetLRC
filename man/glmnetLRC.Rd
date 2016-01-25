@@ -9,11 +9,10 @@
 \alias{print.glmnetLRC}
 \title{Lasso and elastic-net logistic regression classifier (LRC) with arbitrary loss function}
 \usage{
-glmnetLRC(truthLabels, predictors, lossMat = "0-1", weight = rep(1,
+glmnetLRC(truthLabels, predictors, lossMat = "0-1", lossWeight = rep(1,
   NROW(predictors)), alphaVec = seq(0, 1, by = 0.2), tauVec = seq(0.1, 0.9,
-  by = 0.05), intercept = TRUE, naFilter = 0.6, cvFolds = 5,
-  cvReps = 100, stratify = FALSE, masterSeed = 1, nJobs = 1,
-  estimateLoss = FALSE, verbose = FALSE)
+  by = 0.05), cvFolds = 5, cvReps = 100, stratify = FALSE,
+  masterSeed = 1, nJobs = 1, estimateLoss = FALSE, verbose = FALSE, ...)
 
 \method{print}{glmnetLRC}(x, ...)
 
@@ -41,10 +40,8 @@ as n-1 dummy variables in the matrix.}
 matrix of class \code{lossMat}, produced by \code{\link{lossMatrix}}, that specifies
 the penalties for classification errors.}
 
-\item{weight}{The observation weights that are passed to \code{\link{glmnet}}.
-The default value
-is 1 for each observation. Refer to \code{\link{glmnet}} for further
-information.}
+\item{lossWeight}{A vector of weights used to calculate the expected loss, one weight for each
+observation. The default value is 1 for each observation.}
 
 \item{alphaVec}{A vector of potential values for the elastic net mixing parameter,
 \eqn{\alpha}. A value of \eqn{\alpha = 1} is the lasso penalty, \eqn{\alpha = 0} is the ridge penalty.
@@ -56,28 +53,23 @@ that the observation belongs to the second level
 of \code{truthLabels} exceeds tau, the observation is classified as belonging
 to the second level.}
 
-\item{intercept}{A logical indicating whether an intercept should be included in glmnet model,
-passed to the \code{intercept} argument of \code{\link{glmnet}}.}
-
-\item{naFilter}{The maximum proportion of data observations that can be missing
-for any single column in \code{predictors}. If, for a given predictor, the proportion of
-sample observations which are NA is greater than \code{naFilter}, the predictor is
-not included in the elastic net model fitting.}
-
 \item{cvFolds}{The number of cross validation folds.
 \code{cvFolds = length(truthLabels)} gives leave-one-out (L.O.O.) cross validation,
 in which case \code{cvReps} is set to \code{1} and \code{stratify} is set to \code{FALSE}.}
 
 \item{cvReps}{The number of cross validation replicates, i.e., the number
 of times to repeat the cross validation
-by randomly repartitioning the data into folds. This argument is set to \code{1} for L.O.O
-cross validation, as there can only be one possible partition of the data.}
+by randomly repartitioning the data into folds and estimating the tuning parameters.
+For L.O.O. cross validation, this argument is set to \code{1} as there can only be one
+possible partition of the data.}
 
 \item{stratify}{A logical indicating whether stratified sampling should be used
 to ensure that observations from
 both levels of \code{truthLabels} are proportionally present in the cross validation
-training folds. This may be required for small or imbalanced data sets.  Note that
-stratification is not performed for L.O.O (when \code{cvFolds = length(truthLabels)}).}
+folds. In other words, stratification attempts to ensure there are sufficient observations
+of each level of \code{truthLabels} in each training set to fit the model.
+Stratification may be required for small or imbalanced data sets.  Note that stratification
+is not performed for L.O.O (when \code{cvFolds = length(truthLabels)}).}
 
 \item{masterSeed}{The random seed used to generate unique (and repeatable) seeds for
 each cross validation replicate.}
@@ -85,15 +77,15 @@ each cross validation replicate.}
 \item{nJobs}{The number of cores on the local host
 to use in parallelizing the training.  Parallelization
 takes place at the \code{cvReps} level, i.e., if \code{cvReps = 1}, parallelizing would
-do no good, whereas if \code{cvReps = 2}, each rep would be run separately in its
-own thread if \code{nJobs = 2}.
+do no good, whereas if \code{cvReps = 2}, each cross validation replicate would be run
+separately in its own thread if \code{nJobs = 2}.
 Parallelization is executed using \code{\link{parLapplyW}} from the
 \pkg{Smisc} package.}
 
 \item{estimateLoss}{A logical, set to \code{TRUE} to calculate the average loss estimated via
 cross validation using the optimized parameters \eqn{(\alpha, \lambda, \tau)} to fit the elastic
-net model for each cross validation fold.
-This requires another cross validation pass through the data, but using only
+net model for each cross validation fold. This can be computationally expensive,
+as it requires another cross validation pass through the same partitions of the data, but using only
 the optimal parameters to estimate the loss for each cross validation replicate.}
 
 \item{verbose}{A logical, set to \code{TRUE} to receive messages regarding
@@ -117,8 +109,11 @@ true labels. Optional.}
 \item{keepCols}{A numeric vector of column numbers (or a character vector of
 column names) that will be 'kept' and returned with the predictions. Optional.}
 
-\item{\dots}{Additional arguments to default S3 method \code{\link{pairs}}, used only by the
-\code{plot} method.  Ignored by the \code{print}, \code{coef}, \code{predict}, and \code{extract} methods.}
+\item{\dots}{For \code{glmnetLRC()}, these are additional arguments to \code{\link{glmnet}} in the \pkg{glmnet} package.
+Certain arguments of \code{\link{glmnet}} are reserved by \code{glmnetLRC} and an error message will make that
+clear.  In particular, these include arguments that control the behavior of \eqn{\alpha} and \eqn{\lambda}.
+For the \code{plot} method, the \dots are additional arguments to default S3 method \code{\link{pairs}}.  And for
+the \code{print}, \code{coef}, \code{predict}, and \code{extract} methods, the \dots are ignored.}
 }
 \value{
 Returns an object of class \code{glmnetLRC}, which
@@ -128,8 +123,8 @@ the optimal parameters \eqn{(\alpha, \lambda, \tau)}.
 It also contains the following additional elements:
 \describe{
 \item{lossMat}{The loss matrix used as the criteria for selecting optimal tuning parameters}
-\item{parms}{A data fame that contains the tuning parameter estimates for \eqn{(\alpha, \lambda, \tau)} that minmize the expected
-loss for each cross validation replicate.  Used by the \code{plot} method.}
+\item{parms}{A data fame that contains the tuning parameter estimates for \eqn{(\alpha, \lambda, \tau)} that minimize
+the expected loss for each cross validation replicate.  Used by the \code{plot} method.}
 \item{optimalParms}{A named vector that contains the final estimates of \eqn{(\alpha, \lambda, \tau)}, calculated as the
 element-wise median of \code{parms}}
 \item{lossEstimates}{If \code{estimateLoss = TRUE}, this element contains a data frame with the expected loss
@@ -162,7 +157,7 @@ fitting the elastic net model at the points of the two-dimensional grid defined 
 \code{alphaVec} and \code{tauVec}.  For each value of \eqn{\alpha}, the vector of
 \eqn{\lambda}
 values is selected automatically by \code{\link{glmnet}} according to its default
-arguments.  
+arguments.
 The expected loss is calculated for each \eqn{(\alpha,\lambda,\tau)} triple, and the
 triple giving rise to the lowest risk designates the optimal model for a given
 cross validation partition, or cross validation replicate, of the data.
@@ -231,8 +226,8 @@ lM
 
 # Train the elastic net classifier (we don't run it here because it takes a long time)
 \dontrun{
-loadNamespace("parallel")
-glmnetLRC_fit <- glmnetLRC(response, predictors, lM, nJobs = parallel::detectCores())
+glmnetLRC_fit <- glmnetLRC(response, predictors, lossMat = lM, estimateLoss = TRUE,
+                           nJobs = parallel::detectCores())
 }
 
 # We'll load the precalculated model fit instead
@@ -247,7 +242,7 @@ coef(glmnetLRC_fit)
 # Show the plot of all the optimal parameter values for each cross validation replicate
 plot(glmnetLRC_fit)
 
-# Extract the 'glmnet' object from the LRGglmnet fit
+# Extract the 'glmnet' object from the glmnetLRC fit
 glmnetObject <- extract(glmnetLRC_fit)
 
 # See how the glmnet methods operate on the object
@@ -267,7 +262,7 @@ head(new)
 # Now summarize the performance of the model
 summary(new)
 
-# If predictions are made without the an indication of the ground truth,
+# If predictions are made without an indication of the ground truth,
 # the summary is necessarily simpler:
 summary(predict(glmnetLRC_fit, testdata))
 }

@@ -100,7 +100,8 @@ object we created above), the matrix of predictor variables, {\tt predictors},
 and the loss matrix {\tt lossMat}. Noteworthy additional arguments include {\tt tauVec}, a vector of potential 
 thresholds $\tau \in (0, 1)$ that are used to dichotomize the predicted probabilities from the logistic regression 
 into two class labels; {\tt alphaVec}, a vector of potential values of the elastic-net mixing parameter 
-$\alpha \in [0, 1]$; {\tt cvFolds}, the number of cross validation folds; and {\tt masterSeed}, which controls 
+$\alpha \in [0, 1]$; {\tt cvFolds}, the number of cross validation folds; {\tt cvReps}, the number of times
+the cross validation process is repeated with a different random partition of the data, and {\tt masterSeed}, which controls 
 the partitioning of the data into the cross validation folds. Keep in mind that $\alpha$ governs the tradeoff between 
 the two regularization penalties. When $\alpha = 0$, $L_2$ regularization (the ridge penalty) is used,
 and when $\alpha = 1$, $L_1$ regularization (the lasso penality) is used.
@@ -255,17 +256,17 @@ It will be useful to represent the predicted class of observation
 $i$ as $\hat{y}_i \equiv f \bigl( \mathbf{x}_i,\hat{\boldsymbol{\beta}}(\alpha,\lambda),\tau \bigr) = 
 I_{(\hat\pi_i > \tau)}$, where $f$ can be thought of as the LRC.
 For the elastic-net, the estimate $\hat{\boldsymbol{\beta}}$ is the $\boldsymbol{\beta}$
-that maximizes the penalized, binomial log likelihood function:
+that maximizes the penalized, binomial log-likelihood function:
 \begin{align}
 \label{eq:penalized_likelihood}
 \hat{\boldsymbol{\beta}}(\alpha,\lambda) = \argmax_{\boldsymbol\beta \in \mathbb{R}^{p+1}} \Biggl[ \ell(\mathbf{x}_i,\boldsymbol{\beta}) - \lambda 
 \biggl( \frac{1-\alpha}{2} \sum_{i=1}^p \beta_i^2 + \alpha \sum_{i=1}^p |\beta_i| \biggr) \Biggr]
 \end{align}
-\noindent where the unpenalized log likelihood is given by
+\noindent where the unpenalized log-likelihood is given by
 \begin{align}
 \label{eq:unpenalized_likelihood}
 %\ell(\mathbf{x}_i,\boldsymbol{\beta}) = \sum_{i=1}^N \bigl[ y_i \log(\pi_i) + (1 - y_i)\log(1-\pi_i) \bigr]
-\ell(\mathbf{x}_i,\boldsymbol{\beta}) = \sum_{i=1}^N \biggl[ y_i \bigl( \beta_0 + \boldsymbol\beta_1^T\mathbf{x}_i \bigr) 
+\ell(\mathbf{x}_i,\boldsymbol{\beta}) = \frac{1}{N} \sum_{i=1}^N \biggl[ y_i \bigl( \beta_0 + \boldsymbol\beta_1^T\mathbf{x}_i \bigr) 
   - \log \bigl( 1 + \exp(\beta_0 + \boldsymbol\beta_1^T\mathbf{x}_i ) \bigl) \biggr]
 \end{align}
 \noindent Parenthetically, $\alpha = 1$ is the lasso penalty, $\alpha = 0$ is the ridge regression penalty,
@@ -297,7 +298,7 @@ the {\tt lossMat} argument of {\tt glmnetLRC()}.
 Cross validation is accomplished by randomly partitioning the data into $m$ folds (non-overlapping and
 exhaustive subsets), where each fold is tested using a model trained on the remaining folds. 
 The value of $m$ is controlled by the {\tt cvFolds} argument in 
-{\tt glmnetLRC()}. Following the presentation of Hastie et al. \citeyear{Hastie}, let
+{\tt glmnetLRC()}. Following the presentation of Hastie, et al. \citeyear{Hastie}, let
 \begin{align}
 \label{eq:cv_map}
 \delta:\{1,\ldots,N\} \rightarrow \{1, \ldots, m\}
@@ -308,12 +309,13 @@ fitting the elastic-net logistic regression model to all the training data excep
 The cross validation estimate of the risk is given by
 \begin{align}
 \label{eq:risk}
-R(\alpha,\lambda,\tau) = \frac{1}{N}\sum_{i=1}^N L \Bigl(y_i, f\bigl(\mathbf{x}_i,
-~\hat{\boldsymbol{\beta}}^{-\delta(i)}(\alpha,\lambda), ~\tau \bigr) \Bigr)
+R(\alpha,\lambda,\tau) = \frac{\sum_{i=1}^N w_i L \Bigl(y_i, f\bigl(\mathbf{x}_i,
+~\hat{\boldsymbol{\beta}}^{-\delta(i)}(\alpha,\lambda), ~\tau \bigr) \Bigr)}{\sum_{i=1}^N w_i}
 \end{align}
 \noindent Note that \eqref{eq:risk} is defined such that each observation in the training data receives 
 equal weight. The optimal estimates of the tuning parameters are those that minimize the risk:
 \begin{align}
+\label{eq:tuning_estimates}
 (\hat\alpha,\hat\lambda,\hat\tau) = \argmin_{\alpha,\lambda,\tau} R(\alpha,\lambda,\tau)
 \end{align}
 
@@ -336,8 +338,8 @@ indexed by $j = 1,\ldots,J$.  The value of $J$ is controlled by the {\tt cvReps}
 
 Calling the {\tt plot()} method
 on the object returned by {\tt glmnetLRC()} shows a pairs plot and univariate histogram of the
-various $(\hat\alpha_j, \hat\lambda_j, \hat\tau_j)$.  This plot illustrates the consistency of the tuning parameter estimates 
-across cross validation replicates.
+various $(\hat\alpha_j, \hat\lambda_j, \hat\tau_j)$.  This plot illustrates the consistency (or lack thereof) 
+of the tuning parameter estimates across cross validation replicates.
 
 \subsection{The final LRC model}
 
@@ -363,14 +365,14 @@ $\hat{\boldsymbol\beta}(\hat\alpha^\star,\hat\lambda^\star)$.
 A measure of overall performance for the LRC is provided by the cross validation estimate of the risk. Extending
 \eqref{eq:cv_map}, let $\delta_1, \ldots, \delta_J$
 represent the partition mappings of the $J$ cross validation replicates.  For each replicate $j$, we obtain $(\hat\alpha_j, 
-\hat\lambda_j, \hat\tau_j)$ as defined by \eqref{eq:final_tuning}.  Using those tuning parameter estimates, a
+\hat\lambda_j, \hat\tau_j)$ as defined by \eqref{eq:tuning_estimates}.  Using those tuning parameter estimates, a
 corresponding set of regression
 parameter estimates, $\hat{\boldsymbol{\beta}}^{-k}(\hat\alpha_j,\hat\lambda_j)$, are obtained using \eqref{eq:penalized_likelihood} 
 for each of the $m$ folds in replicate $j$.  The estimate of the risk for replicate $j$ is given by applying \eqref{eq:risk} as follows:
 \begin{align}
 \label{eq:final_risk_j}
 R_j  = \frac{1}{N}\sum_{i=1}^N L \Bigl(y_i, f\bigl(\mathbf{x}_i,
-~\hat{\boldsymbol{\beta}}^{-\delta(i)}(\hat\alpha_j,\hat\lambda_j),  ~\hat\tau_j \bigr) \Bigr)
+~\hat{\boldsymbol{\beta}}^{-\delta_j(i)}(\hat\alpha_j,\hat\lambda_j),  ~\hat\tau_j \bigr) \Bigr)
 \end{align}
 The value of $R_j$ is calculated for $j = 1,\ldots,J$ and summarized using the mean and standard deviation
 in the usual way:

@@ -1,6 +1,6 @@
 ## Prepare data for fitting glmnetLRC model
 ##
-## Removing missing observations and coluns with too much missing data
+## Removing missing observations and columns with too much missing data
 ## A helper function for \code{\link{glmnetLRC}}
 
 dataPrep <- function(truthLabels,
@@ -43,8 +43,9 @@ dataPrep <- function(truthLabels,
   cc <- complete.cases(cbind(truthLabels, predictors))
 
   # If there are no complete cases
-  if (!any(cc))
+  if (!any(cc)) {
     stop("There are no complete rows of data remaining for analysis")
+  }
 
   # Remove obs that don't have complete cases
   predictors <- predictors[cc,]

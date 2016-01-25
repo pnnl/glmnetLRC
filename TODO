@@ -1,8 +1,5 @@
 *  Unit testing code (using all the various methods of partitioning), testing 0-1 lossMat, etc.
 
-*  Vignette and documentation edits:  
-    discuss stratified sampling?
+* After testing, Remove commented code in single_LRCglmnet.R and other files
 
-* Intelligent stopifnot() call to give understandable messages
-
-* After testing, Remove commented code in single_LRCglmnet.R
+* Document expected loss weights in vignette

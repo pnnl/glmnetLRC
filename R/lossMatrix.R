@@ -38,18 +38,20 @@
 lossMatrix <- function(truthLabels, predLabels, lossValues) {
 
   # Check inputs
-  stopifnot(is.character(truthLabels),
-            is.character(predLabels),
-            is.numeric(lossValues),
-            length(truthLabels) == length(predLabels),
-            length(truthLabels) == length(lossValues))
+  Smisc::stopifnotMsg(
+    is.character(truthLabels), "'truthLabels' must be character",
+    is.character(predLabels), "'predLabels' must be character",
+    is.numeric(lossValues), "'lossValues' must be numeric",
+    length(truthLabels) == length(predLabels), "'truthLabels' and 'predLabels' must have the same length",
+    length(truthLabels) == length(lossValues), "'truthLabels' and 'lossValues' must have the same length")
 
   # Assemble into a dataframe
-  out <- data.frame(truthLabels = truthLabels, predLabels = predLabels,
+  out <- data.frame(truthLabels = truthLabels,
+                    predLabels = predLabels,
                     loss = lossValues)
 
   # Verify we don't have any duplicate pairings of truth and predicted values
-  if (any(duplicated(out[,c("truthLabels","predLabels")])))
+  if (any(duplicated(out[,c("truthLabels", "predLabels")])))
     stop("At least one pair of truth and predicted labels is duplicated")
 
   # Assign the class
@@ -68,13 +70,13 @@ lossMatrix <- function(truthLabels, predLabels, lossValues) {
 
 print.lossMat <- function(x, ...) {
 
-  # Print the loss matrix as a matrix...
+  # Print the loss matrix as a matrix that's easy to read
 
   # Get the unique truth and predicted labels
   truthL <- levels(x$truthLabels)
   predL <- levels(x$predLabels)
 
-  # A matrix from
+  # A matrix of NA's
   m <- matrix(rep(NA, length(truthL) * length(predL)),
               nrow = length(truthL), dimnames = list(truthL, predL))
 

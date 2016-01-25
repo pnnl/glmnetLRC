@@ -59,10 +59,8 @@
 ##' matrix of class \code{lossMat}, produced by \code{\link{lossMatrix}}, that specifies
 ##' the penalties for classification errors.
 ##'
-##' @param weight The observation weights that are passed to \code{\link{glmnet}}.
-##' The default value
-##' is 1 for each observation. Refer to \code{\link{glmnet}} for further
-##' information.
+##' @param lossWeight A vector of weights used to calculate the expected loss, one weight for each
+##' observation. The default value is 1 for each observation.
 ##'
 ##' @param alphaVec A vector of potential values for the elastic net mixing parameter,
 ##' \eqn{\alpha}. A value of \eqn{\alpha = 1} is the lasso penalty, \eqn{\alpha = 0} is the ridge penalty.
@@ -74,14 +72,6 @@
 ##' of \code{truthLabels} exceeds tau, the observation is classified as belonging
 ##' to the second level.
 ##'
-##' @param intercept A logical indicating whether an intercept should be included in glmnet model,
-##' passed to the \code{intercept} argument of \code{\link{glmnet}}.
-##'
-##' @param naFilter The maximum proportion of data observations that can be missing
-##' for any single column in \code{predictors}. If, for a given predictor, the proportion of
-##' sample observations which are NA is greater than \code{naFilter}, the predictor is
-##' not included in the elastic net model fitting.
-##'
 ##' @param cvFolds The number of cross validation folds.
 ##' \code{cvFolds = length(truthLabels)} gives leave-one-out (L.O.O.) cross validation,
 ##' in which case \code{cvReps} is set to \code{1} and \code{stratify} is set to \code{FALSE}.
@@ -89,14 +79,16 @@
 ##' @param cvReps The number of cross validation replicates, i.e., the number
 ##' of times to repeat the cross validation
 ##' by randomly repartitioning the data into folds and estimating the tuning parameters.
-##' This argument is set to \code{1} for L.O.O
-##' cross validation, as there can only be one possible partition of the data.
+##' For L.O.O. cross validation, this argument is set to \code{1} as there can only be one
+##' possible partition of the data.
 ##'
 ##' @param stratify A logical indicating whether stratified sampling should be used
 ##' to ensure that observations from
 ##' both levels of \code{truthLabels} are proportionally present in the cross validation
-##' folds. This may be required for small or imbalanced data sets.  Note that
-##' stratification is not performed for L.O.O (when \code{cvFolds = length(truthLabels)}).
+##' folds. In other words, stratification attempts to ensure there are sufficient observations
+##' of each level of \code{truthLabels} in each training set to fit the model.
+##' Stratification may be required for small or imbalanced data sets.  Note that stratification
+##' is not performed for L.O.O (when \code{cvFolds = length(truthLabels)}).
 ##'
 ##' @param masterSeed The random seed used to generate unique (and repeatable) seeds for
 ##' each cross validation replicate.
@@ -104,19 +96,25 @@
 ##' @param nJobs The number of cores on the local host
 ##' to use in parallelizing the training.  Parallelization
 ##' takes place at the \code{cvReps} level, i.e., if \code{cvReps = 1}, parallelizing would
-##' do no good, whereas if \code{cvReps = 2}, each rep would be run separately in its
-##' own thread if \code{nJobs = 2}.
+##' do no good, whereas if \code{cvReps = 2}, each cross validation replicate would be run
+##' separately in its own thread if \code{nJobs = 2}.
 ##' Parallelization is executed using \code{\link{parLapplyW}} from the
 ##' \pkg{Smisc} package.
 ##'
 ##' @param estimateLoss A logical, set to \code{TRUE} to calculate the average loss estimated via
 ##' cross validation using the optimized parameters \eqn{(\alpha, \lambda, \tau)} to fit the elastic
-##' net model for each cross validation fold.
-##' This requires another cross validation pass through the data, but using only
+##' net model for each cross validation fold. This can be computationally expensive,
+##' as it requires another cross validation pass through the same partitions of the data, but using only
 ##' the optimal parameters to estimate the loss for each cross validation replicate.
 ##'
 ##' @param verbose A logical, set to \code{TRUE} to receive messages regarding
 ##' the progress of the training algorithm.
+##'
+##' @param \dots For \code{glmnetLRC()}, these are additional arguments to \code{\link{glmnet}} in the \pkg{glmnet} package.
+##' Certain arguments of \code{\link{glmnet}} are reserved by \code{glmnetLRC} and an error message will make that
+##' clear.  In particular, these include arguments that control the behavior of \eqn{\alpha} and \eqn{\lambda}.
+##' For the \code{plot} method, the \dots are additional arguments to default S3 method \code{\link{pairs}}.  And for
+##' the \code{print}, \code{coef}, \code{predict}, and \code{extract} methods, the \dots are ignored.
 ##'
 ##' @return
 ##' Returns an object of class \code{glmnetLRC}, which
@@ -126,8 +124,8 @@
 ##' It also contains the following additional elements:
 ##' \describe{
 ##' \item{lossMat}{The loss matrix used as the criteria for selecting optimal tuning parameters}
-##' \item{parms}{A data fame that contains the tuning parameter estimates for \eqn{(\alpha, \lambda, \tau)} that minmize the expected
-##' loss for each cross validation replicate.  Used by the \code{plot} method.}
+##' \item{parms}{A data fame that contains the tuning parameter estimates for \eqn{(\alpha, \lambda, \tau)} that minimize
+##' the expected loss for each cross validation replicate.  Used by the \code{plot} method.}
 ##' \item{optimalParms}{A named vector that contains the final estimates of \eqn{(\alpha, \lambda, \tau)}, calculated as the
 ##' element-wise median of \code{parms}}
 ##' \item{lossEstimates}{If \code{estimateLoss = TRUE}, this element contains a data frame with the expected loss
@@ -214,56 +212,66 @@
 
 glmnetLRC <- function(truthLabels, predictors,
                       lossMat = "0-1",
-                      weight = rep(1, NROW(predictors)),
+#                      weight = rep(1, NROW(predictors)),
+                      lossWeight = rep(1, NROW(predictors)),
                       alphaVec = seq(0, 1, by = 0.2),
                       tauVec = seq(0.1, 0.9, by = 0.05),
-                      intercept = TRUE,
-                      naFilter = 0.6,
+#                      intercept = TRUE,
                       cvFolds = 5,
                       cvReps = 100,
                       stratify = FALSE,
                       masterSeed = 1,
                       nJobs = 1,
                       estimateLoss = FALSE,
-                      verbose = FALSE) {
+                      verbose = FALSE,
+                      ...) {
 
   # Check inputs
-  stopifnot(is.factor(truthLabels),
-            length(levels(truthLabels)) == 2,
-            NCOL(predictors) > 1,
-            is.matrix(predictors),
-            is.numeric(predictors),
-            length(truthLabels) == NROW(predictors),
-            is.numeric(alphaVec),
-            all(alphaVec <= 1) & all(alphaVec >= 0),
-            is.numeric(tauVec),
-            all(tauVec < 1) & all(tauVec > 0),
-            length(intercept) == 1,
-            is.logical(intercept),
-            length(naFilter) == 1,
-            is.numeric(naFilter),
-            (naFilter < 1) & (naFilter > 0),
-            length(cvFolds) == 1,
-            is.numeric(cvFolds),
-            cvFolds %% 1 == 0,
-            cvFolds >= 2,
-            cvFolds <= NROW(predictors),
-            length(cvReps) == 1,
-            is.numeric(cvReps),
-            cvReps %% 1 == 0,
-            cvReps > 0,
-            length(stratify) == 1,
-            is.logical(stratify),
-            is.numeric(masterSeed),
-            length(masterSeed) == 1,
-            is.numeric(nJobs),
-            nJobs >= 1,
-            nJobs %% 1 == 0,
-            is.logical(estimateLoss),
-            length(estimateLoss) == 1,
-            is.logical(verbose),
-            length(verbose) == 1)
+  Smisc::stopifnotMsg(
+    is.factor(truthLabels), "'truthLabels' must be a factor",
+    length(levels(truthLabels)) == 2, "'truthLabels' must have 2 levels",
+    NCOL(predictors) > 1, "'predictors' must have at least 2 columns",
+    is.matrix(predictors), "'predictors' must be a matrix",
+    is.numeric(predictors), "'predictors' must be a numeric",
+    length(truthLabels) == NROW(predictors), "the length of 'truthLabels' must match the number of rows in 'predictors'",
+    is.numeric(lossWeight), "'lossWeight' must be a numeric vector",
+    length(lossWeight) == NROW(predictors), "the length of 'lossWeight' must match the number of rows in 'predictors'",
+    all(lossWeight >= 0), "All values of 'lossWeight' must be non-negative",
+    is.numeric(alphaVec), "'alphaVec' must be numeric",
+    all(alphaVec <= 1) & all(alphaVec >= 0), "All values of 'alphaVec' must be in [0, 1]",
+    is.numeric(tauVec), "'tauVec' must be numeric",
+    all(tauVec < 1) & all(tauVec > 0), "All values of 'alphaVec' must be in (0, 1)",
+#    length(intercept) == 1, "'intercept' must be of length 1",
+#    is.logical(intercept), "'intercept' must be TRUE or FALSE",
+    length(cvFolds) == 1, "'cvFolds' must be of length 1",
+    is.numeric(cvFolds), "'cvFolds' must be numeric",
+    cvFolds %% 1 == 0, "'cvFolds' must be an integer",
+    cvFolds >= 2, "'cvFolds' must be 2 or greater",
+    cvFolds <= NROW(predictors), "'cvFolds' cannot be larger than the number of rows in 'predictors'",
+    length(cvReps) == 1, "'cvReps' must be of length 1",
+    is.numeric(cvReps), "'cvReps' must be numeric",
+    cvReps %% 1 == 0, "'cvReps' must be an integer",
+    cvReps > 0, "'cvReps' must be 1 or larger",
+    length(stratify) == 1, "'stratify' must be of length 1",
+    is.logical(stratify), "'stratify' must be TRUE or FALSE",
+    length(masterSeed) == 1, "'masterSeed' must be of length 1",
+    is.numeric(masterSeed), "'masterSeed' must be numeric",
+    is.numeric(nJobs), "'nJobs' must be numeric",
+    nJobs >= 1, "'nJobs' must be 1 or greater",
+    nJobs %% 1 == 0, "'nJobs' must be an integer",
+    length(estimateLoss) == 1, "'estimateLoss' must have length of 1",
+    is.logical(estimateLoss), "'estimateLoss' must be TRUE or FALSE",
+    length(verbose) == 1, "'verbose' must be TRUE or FALSE",
+    is.logical(verbose), "'verbose' must have length 1")
 
+  # Check for missing data
+  if (!all(complete.cases(truthLabels))) {
+    warning("'truthLabels' contains missing values which may upset 'glmnet::glmnet()'")
+  }  
+  if (!all(complete.cases(predictors))) {
+    warning("'predictors' contains missing values which may upset 'glmnet::glmnet()'")
+  }
+  
   # Check the loss matrix
   lmGood <- FALSE
 
@@ -288,25 +296,61 @@ glmnetLRC <- function(truthLabels, predictors,
     stop("'lossMat' must be either '0-1' or an object of class 'lossMat' returned by 'lossMatrix()'")
   }
 
+
+  # Gather arguments for glmnet
+  glmnetArgs <- list(...)
+
+  # Check the glmnet arguments
+  if (length(glmnetArgs)) {
+      
+    # Get the names of the args provided by the user
+    userArgs <- names(glmnetArgs)
+
+    # Make sure the user hasn't provided any of the glmnet args that are 'off-limits'
+    offLimits <- c("x", "y", "family", "alpha", "nlambda", "lambda.min.ratio", "lambda",
+                   "type.gaussian", "type.multinomial", "standardize.response")
+
+    # Verify none of the off limit args have been used
+    if (any(userArgs %in% offLimits)) {
+      stop("The following arguments to glmnet::glmnet() are controlled and should not be supplied to '...':\n",
+           "'", paste(offLimts, collapse = "', '"), "'\n")
+    }
+
+    # Get the name of the glmnet args
+    glmnetArgs <- names(formals(glmnet::glmnet))
+    
+    # Verify that all the glmnent args provided match glmnet
+    if (!all(userArgs %in% glmnetArgs)) {
+      stop("The following do not match the arguments in glmnet:glmnet():\n",
+           "'", paste(setdiff(userArgs, glmnetArgs), collapse = "', '"), "'\n")
+    }
+    
+  }
+
+  # Create the full list of glmnetArgs that doesn't involve the lambda or alpha parameters
+  glmnetArgs <- c(list(x = predictors, y = truthLabels, family = "binomial"), glmnetArgs)
+  class(glmnetArgs) <- c("glmnetArgs", class(glmnetArgs))
+                       
   # Force the evaluation of the weight object immediately--this is IMPORTANT
   # because of R's lazy evaluation
-  force(weight)
+  force(lossWeight)
 
   ################################################################################
   # Data preparation
   ################################################################################
 
   # Get the data and filter missing values as neccessary
-  d <- dataPrep(truthLabels, predictors, weight, naFilter, verbose)
+#  d <- dataPrep(truthLabels, predictors, weight, naFilter, verbose)
 
   # number of observations after filtering for NAs
-  n <- length(d$truthLabels)
+  n <- length(truthLabels)
 
   # Report the number of observations
   if (verbose) {
     cat(n, "observations are available for fitting the glmnetLRC model\n")
   }
 
+  
   # A wrapper function for calling single_glmnetLRC() via Smisc::parLapplyW()
   trainWrapper <- function(testFolds,
                            alphaVec = 1,
@@ -314,13 +358,14 @@ glmnetLRC <- function(truthLabels, predictors,
                            lambdaVal = NULL,
                            lambdaVec = NULL) {
 
-    single_glmnetLRC(d$truthLabels,
-                     d$predictors,
+    single_glmnetLRC(glmnetArgs,
+#                     d$truthLabels,
+#                     d$predictors,
                      lossMat,
-                     d$weight,
+                     lossWeight,
                      alphaVec,
                      tauVec,
-                     intercept,
+#                     intercept,
                      cvFolds,
                      testFolds,
                      n,
@@ -331,7 +376,7 @@ glmnetLRC <- function(truthLabels, predictors,
   } # trainWrapper
 
   # Generate the test sets that will be passed into the cv routines
-  testSets <- generateTestSets(d$truthLabels, cvFolds, cvReps, masterSeed, stratify)
+  testSets <- generateTestSets(truthLabels, cvFolds, cvReps, masterSeed, stratify)
 
   # nJobs should not be larger than cvReps
   nJobs <- min(nJobs, cvReps)
@@ -342,12 +387,13 @@ glmnetLRC <- function(truthLabels, predictors,
   if (nJobs > 1) {
 
     # Object names that will be needed in the cluster
-    neededObjects <- c("d",
+    neededObjects <- c("glmnetArgs",
                        "alphaVec",
                        "tauVec",
-                       "n",
-                       "cvFolds",
                        "lossMat",
+                       "lossWeight",
+                       "cvFolds",
+                       "n",
                        "verbose")
 
 
@@ -389,7 +435,7 @@ glmnetLRC <- function(truthLabels, predictors,
   ################################################################################
 
   # Create an aggregated lambda sequence to fit the final lasso logisitc
-  # regression model. Per the documentation in glmnetfit, apparently it does better
+  # regression model. Per the documentation in glmnetfit, it does better
   # with a sequence of lambdas during the fitting.  But the predict method only
   # operates on the optimal lambda
   sdLambda <- sd(parmEstimates$lambda)
@@ -400,10 +446,13 @@ glmnetLRC <- function(truthLabels, predictors,
                       decreasing = TRUE)
 
   # Fit the model using the aggregate parameters
-  glmnetFinal <- glmnet::glmnet(d$predictors, d$truthLabels, weights = d$weight,
-                                family = "binomial", lambda = lambdaVec,
-                                alpha = finalParmEstimates[["alpha"]],
-                                intercept = intercept)
+  glmnetFinal <- do.call(glmnet::glmnet,
+                         c(glmnetArgs, list(lambda = lambdaVec, alpha = finalParmEstimates[["alpha"]])))
+
+  ## glmnetFinal <- glmnet::glmnet(d$predictors, d$truthLabels, weights = d$weight,
+  ##                               family = "binomial", lambda = lambdaVec,
+  ##                               alpha = finalParmEstimates[["alpha"]],
+  ##                               intercept = intercept)
 
   # Add the loss matrix
   glmnetFinal$lossMat <- lossMat
@@ -529,9 +578,6 @@ print.glmnetLRC <- function(x, ...) {
 ##' This can provide a sense of the stability of the estimates of the tuning
 ##' parameters.
 ##'
-##' @param \dots Additional arguments to default S3 method \code{\link{pairs}}, used only by the
-##' \code{plot} method.  Ignored by the \code{print}, \code{coef}, \code{predict}, and \code{extract} methods.
-##'
 ##' @export
 
 plot.glmnetLRC <- function(x, ...){
@@ -650,13 +696,15 @@ predict.glmnetLRC <- function(object,
   }
 
   # Switching from column numbers to column names if necessary
-  if (!is.null(truthCol) & is.numeric(truthCol)) {
-     truthCol <- colnames(newdata)[truthCol]
-  }
+  truthCol <- Smisc::selectElements(truthCol, colnames(newdata))
+  ## if (!is.null(truthCol) & is.numeric(truthCol)) {
+  ##    truthCol <- colnames(newdata)[truthCol]
+  ## }
 
-  if (!is.null(keepCols) & is.numeric(keepCols)) {
-     keepCols <- colnames(newdata)[keepCols]
-  }
+  keepCols <- Smisc::selectElements(keepCols, colnames(newdata))
+  ## if (!is.null(keepCols) & is.numeric(keepCols)) {
+  ##    keepCols <- colnames(newdata)[keepCols]
+  ## }
 
   # Verify the levels of truthCol match the class names in the object
   if (!is.null(truthCol)) {
@@ -674,21 +722,23 @@ predict.glmnetLRC <- function(object,
   predictorNames <- object$beta@Dimnames[[1]]
 
   # Make sure all the predictor names are in the newdata
-  if (!all(predictorNames %in% colnames(newdata)))
+  if (!all(predictorNames %in% colnames(newdata))) {
    stop("The following predictors are expected by 'object' but are not\n",
         "present in 'newdata'\n'",
         paste(setdiff(predictorNames, colnames(newdata)), collapse = "', '"), "'\n")
+  }
 
   # Prepare newdata for prediction
   nd <- as.matrix(newdata[,predictorNames])
 
-  if (!is.numeric(nd))
+  if (!is.numeric(nd)) {
     stop("One or more of the predictor columns in 'newdata' is/are not numeric")
+  }
 
   # Get the original glmnet object
-  glmnetObject <- object[-which(names(object) == "optimalParms")]
-  class(glmnetObject) <- setdiff(class(object), "glmnetLRC")
-
+  glmnetObject <- extract(object)
+#  glmnetObject <- object[-which(names(object) == "optimalParms")]
+#  class(glmnetObject) <- setdiff(class(object), "glmnetLRC")
 
   # Get the numeric (probability) predictions using predict methods from glmnet package
   # using the optimal lambda
@@ -702,9 +752,10 @@ predict.glmnetLRC <- function(object,
                        labels = glmnetObject$classnames)
 
   # If there were rownames in newdata, add them in
-  if (!is.null(rn <- rownames(newdata)))
+  if (!is.null(rn <- rownames(newdata))) {
     names(predLabels) <- rn
-
+  }
+  
   # Combine new data
   output <- cbind(predLabels, newdata[,truthCol], newdata[,keepCols])
   colnames(output) <- c("PredictClass", truthCol, keepCols)

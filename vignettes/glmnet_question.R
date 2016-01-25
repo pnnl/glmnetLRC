@@ -15,10 +15,10 @@ preds <- matrix(c(rnorm(40, 0, 0.5) + y, rnorm(40, 2, 0.5) + y),
                 ncol = 2, dimnames = list(NULL, c("x1", "x2")))
 
 # Fit the glmnet with alpha = 0.7
-gfit <- glmnet(preds, response, family = "binomial", alpha = 0.7)
+gfit <- glmnet(preds, response, family = "binomial", alpha = 0.7, standardize = FALSE)
 
 # Create an objective function that should match results from glmnet
-f <- function(beta, lambda = 1, alpha = 0.7) {
+f <- function(beta, n = 40, lambda = 1, alpha = 0.7) {
 
   # Name the regression parameters for easier readability
   beta0 <- beta[1]
@@ -29,7 +29,7 @@ f <- function(beta, lambda = 1, alpha = 0.7) {
   xb <- beta0 + beta1 * preds[,1] + beta2 * preds[,2]
 
   # The unpenalized binomial log-likelihood
-  ll <- sum(y * xb - log(1 + exp(xb)))
+  ll <- sum(y * xb - log(1 + exp(xb))) / n
 
   # The elastic-net penalty
   penalty <- lambda * (0.5 * (1 - alpha) * (beta1^2 + beta2^2) + alpha * (abs(beta1) + abs(beta2)))
@@ -39,14 +39,14 @@ f <- function(beta, lambda = 1, alpha = 0.7) {
     
 } # f()
 
+################################################################################
 # Compare the coeffficients from glmnet and our manual fitting, using a lambda from
-# roughly in the middle of the lambda sequence.  Why are they so different?
-coef(gfit, s = 0.072, exact = TRUE)
+# roughly in the middle of the lambda sequence.  They agree.
+################################################################################
+coef(gfit, s = 0.072)
 optim(c(-5.2, 1.3, 1.8), f, lambda = 0.072)$par
 
-# Just for kicks, if I increase lambda by a factor of 20, they begin to resemble
-# what glmnet returns
-optim(c(-5.2, 1.3, 1.8), f, lambda = 20 * 0.072)$par
+
 
 # Check the objective function against glm
 d <- data.frame(r = response, x1 = preds[,1], x2 = preds[,2])

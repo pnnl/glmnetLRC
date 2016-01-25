@@ -26,7 +26,7 @@
 ## @param tauVec A numeric sequence of threshold values for the binary
 ## classification.
 ##
-## @param weight A numeric vector indicating the relative weight to ascribe
+## @param lossWeight A numeric vector indicating the relative weight to ascribe
 ## to each row of \code{newData}
 ##
 ## @param lambdaVec A numeric vector of lambda values for which the loss will
@@ -52,28 +52,33 @@
 
 predLoss_glmnetLRC <- function(glmnetFit, newData, truthLabels, lossMat,
                                tauVec = seq(0.1, 0.9, by = 0.1), 
-                               weight = rep(1, NROW(newData)), lambdaVec = NULL) {
+                               lossWeight = rep(1, NROW(newData)),
+                               lambdaVec = NULL) {
 
   # Check inputs
-  stopifnot(inherits(glmnetFit, "lognet"),
-            inherits(glmnetFit, "glmnet"),
+  Smisc::stopifnotMsg(
+      
+    # Ensure the object is of the correct class
+    inherits(glmnetFit, "lognet"), "'glmnetFit' must inherit from the 'lognet' class",
+    inherits(glmnetFit, "glmnet"), "'glmnetFit' must inherit from the 'glmnet' class",
 
-            is.factor(truthLabels),
+    # truthLabels is a factor
+    is.factor(truthLabels), "'truthLabels' must be a factor",
 
-            # Ensure we have a binary response
-            length(levels(truthLabels)) == 2,
+    # Ensure we have a binary response
+    length(levels(truthLabels)) == 2, "'truthLabels' must have 2 levels",
 
-            # Ensure factors were constructed the same way for
-            # the training data and the newdata.  This is important
-            # to ensure our labels don't get messed up
-            all(glmnetFit$classnames == levels(truthLabels)),
+    # Ensure factors were constructed the same way for
+    # the training data and the newdata.  This is important
+    # to ensure our labels don't get messed up
+    all(glmnetFit$classnames == levels(truthLabels)), "Factor levels in 'glmnetFit' object do not match the levels of 'truthLabels'",
+    # tauVec is checked earlier in glmnetLRC()
 
-            is.numeric(tauVec),
+    # Verify lengths match
+    length(lossWeight) == NROW(newData), "the length of 'lossWeight' must be the same as the number of rows in 'newData'")
 
-            length(weight) == NROW(newData))
-
-  # Force the weight to resolve to avoid any issues with lazy evaluation
-  force(weight)
+  # Force the lossWeight to resolve to avoid any issues with lazy evaluation
+  force(lossWeight)
 
   # For each lambda, make probabality predictions that the instance is an
   # element of the class with the largest factor level
@@ -95,7 +100,7 @@ predLoss_glmnetLRC <- function(glmnetFit, newData, truthLabels, lossMat,
                          labels = glmnetFit$classnames)
 
     # Calculate the loss
-    cl <- calcLoss(truthLabels, predLabels, lossMat, weight = weight)
+    cl <- calcLoss(truthLabels, predLabels, lossMat, lossWeight = lossWeight)
 
     return(cl)
 

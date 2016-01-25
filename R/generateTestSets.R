@@ -102,6 +102,8 @@ generateTestSets <- function(truthLabels, cvFolds, cvReps, masterSeed, stratify)
      # A function for creating a proportional allocation of each level to each fold
      allocate <- function(twoSeeds) {
 
+       # twoSeeds is a 2-vector, with a seed for level1 and level2
+
        # Get the allocation for level 1 & 2
        l1 <- Smisc::parseJob(nlevel1, cvFolds, random.seed = twoSeeds[1])
        l2 <- Smisc::parseJob(nlevel2, cvFolds, random.seed = twoSeeds[2])

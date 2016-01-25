@@ -3,7 +3,7 @@
 ##' @description
 ##' This object is returned by the call
 ##' \code{glmnetLRC_fit <- glmnetLRC(response, predictors, lossMat = lM, estimateLoss = TRUE,
-##' nJobs = parallel::detectCores()) in the example of \code{\link{glmnetLRC}}. It is preserved
+##' nJobs = parallel::detectCores())} in the example of \code{\link{glmnetLRC}}. It is preserved
 ##' here in the package because it is time consuming to generate.
 ##'
 ##' @docType data

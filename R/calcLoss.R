@@ -13,7 +13,7 @@
 ## @param lossMat A \code{lossMatrix} object that indicates the loss
 ## for all possible classifications
 ##
-## @param weight A non-negative numeric vector of weights that will
+## @param lossWeight A non-negative numeric vector of weights that will
 ## be used to weight each observation in calculating the loss.
 ##
 ## @param aggregate A logical indicating whether the aggregate loss
@@ -45,23 +45,26 @@
 ## calcLoss(tClass, pClass, lMat)
 
 calcLoss <- function(truthLabels, predLabels, lossMat,
-                     weight = rep(1, length(truthLabels)),
+                     lossWeight = rep(1, length(truthLabels)),
                      aggregate = TRUE) {
 
   # Checks
-  stopifnot(is.factor(truthLabels),
-            is.factor(predLabels),
-            inherits(lossMat, "lossMat"),
-            length(truthLabels) == length(predLabels),
-            length(truthLabels) == length(weight),
-            is.numeric(weight),
-            sum(weight) > 0,
-            all(weight >= 0))
+  Smisc::stopifnotMsg(
+    is.factor(truthLabels), "'truthLabels' must be a factor",
+    is.factor(predLabels), "'predLabels' must be a factor",
+    inherits(lossMat, "lossMat"), "'lossMat' must inherit from 'lossMat'",
+    length(truthLabels) == length(predLabels), "'truthLabels' and 'predLabels' must have the same length",
+    length(truthLabels) == length(lossWeight), "'truthLabels' and 'lossWeight' must have the same length",
+    is.numeric(lossWeight), "'lossWeight' must be numeric",
+    sum(lossWeight) > 0, "the sum of 'lossWeight' must be greater than 0",
+    all(lossWeight >= 0), "all the values of 'lossWeight' must be non-negative",
+    length(aggregate) == 1, "'aggregate' must be of length 1",
+    is.logical(aggregate), "'aggregate' must be TRUE or FALSE")
 
   # Convert the factors to characters and paste together
   tpData <- data.frame(truthLabels = truthLabels,
                        predLabels = predLabels,
-                       weight = weight,
+                       lossWeight = lossWeight,
                        index = 1:length(truthLabels))
 
   # Assign the loss values to the corresponding predicted and actual labels
@@ -75,13 +78,13 @@ calcLoss <- function(truthLabels, predLabels, lossMat,
   # Retun the loss as requested
   if (!aggregate) {
     return(tpD[order(tpD$index),
-               c("truthLabels", "predLabels", "weight", "loss")])
+               c("truthLabels", "predLabels", "lossWeight", "loss")])
   }
 
   else {
-    tpDcc <- tpD[cc, c("loss", "weight")]
-    return(list(weightedSumLoss = sum(tpDcc$loss * tpDcc$weight),
-                sumWeights = sum(tpDcc$weight)))
+    tpDcc <- tpD[cc, c("loss", "lossWeight")]
+    return(list(weightedSumLoss = sum(tpDcc$loss * tpDcc$lossWeight),
+                sumWeights = sum(tpDcc$lossWeight)))
   }
            
 
