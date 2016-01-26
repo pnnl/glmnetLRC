@@ -4,7 +4,7 @@
 \name{traindata}
 \alias{traindata}
 \title{Training data set from the Vorbitrap mass spectrometry instrument}
-\format{A dataframe with 467 observations and 99 variables}
+\format{A dataframe with 325 observations and 99 variables}
 \description{
 Training data set from the Vorbitrap mass spectrometry instrument
 }

@@ -182,7 +182,7 @@ predictTest <- predict(lrc_fit, testdata, truthCol = "Curated_Quality")
 # Look at the first few rows
 head(predictTest)
 
-# Summarize the output of predicting the data we trained on 
+# Summarize the output of predicting the test data
 summary(predictTest)
 @ 
 \noindent If we don't include a truth column in the call to {\tt predict()}, the {\tt summary()} method 
@@ -271,7 +271,7 @@ that maximizes the penalized, binomial log-likelihood function:
 \end{align}
 \noindent Parenthetically, $\alpha = 1$ is the lasso penalty, $\alpha = 0$ is the ridge regression penalty,
 and $0 < \alpha < 1$ is a mixture of the two. The penalty in \eqref{eq:penalized_likelihood} is the one 
-specified the documentation of the {\tt glmnet} package \cite{glmnet}.
+specified in the documentation of the {\tt glmnet} package \cite{glmnet}.
 
 
 \subsection{Estimating the tuning parameters}
@@ -295,13 +295,13 @@ false-negative errors, respectively.  Setting $\kappa_0 = \kappa_1 = 1$ results 
 function.  In the {\tt glmnetLRC} package, $L$ is specified via a call to {\tt lossMatrix()}, and the result is passed to
 the {\tt lossMat} argument of {\tt glmnetLRC()}.
 
-Cross validation is accomplished by randomly partitioning the data into $m$ folds (non-overlapping and
+Cross validation is accomplished by randomly partitioning the data into $M$ folds (non-overlapping and
 exhaustive subsets), where each fold is tested using a model trained on the remaining folds. 
-The value of $m$ is controlled by the {\tt cvFolds} argument in 
+The value of $M$ is controlled by the {\tt cvFolds} argument in 
 {\tt glmnetLRC()}. Following the presentation of Hastie, et al. \citeyear{Hastie}, let
 \begin{align}
 \label{eq:cv_map}
-\delta:\{1,\ldots,N\} \rightarrow \{1, \ldots, m\}
+\delta:\{1,\ldots,N\} \rightarrow \{1, \ldots, M\}
 \end{align}
 \noindent map each observation in the training data to one of the folds.
 Let $\hat{\boldsymbol{\beta}}^{-k}(\alpha,\lambda)$ represent the estimate of $\boldsymbol\beta$ obtained by
@@ -309,11 +309,11 @@ fitting the elastic-net logistic regression model to all the training data excep
 The cross validation estimate of the risk is given by
 \begin{align}
 \label{eq:risk}
-R(\alpha,\lambda,\tau) = \frac{\sum_{i=1}^N w_i L \Bigl(y_i, f\bigl(\mathbf{x}_i,
-~\hat{\boldsymbol{\beta}}^{-\delta(i)}(\alpha,\lambda), ~\tau \bigr) \Bigr)}{\sum_{i=1}^N w_i}
+R(\alpha,\lambda,\tau) = \sum_{i=1}^N w_i L \Bigl(y_i, f\bigl(\mathbf{x}_i,
+~\hat{\boldsymbol{\beta}}^{-\delta(i)}(\alpha,\lambda), ~\tau \bigr) \Bigr) \bigg/ \sum_{i=1}^N w_i
 \end{align}
-\noindent Note that \eqref{eq:risk} is defined such that each observation in the training data receives 
-equal weight. The optimal estimates of the tuning parameters are those that minimize the risk:
+\noindent where the weights $w_i$ are specified in the {\tt lossWeight} argument to {\tt glmnetLRC()}. 
+The optimal estimates of the tuning parameters are those that minimize the risk:
 \begin{align}
 \label{eq:tuning_estimates}
 (\hat\alpha,\hat\lambda,\hat\tau) = \argmin_{\alpha,\lambda,\tau} R(\alpha,\lambda,\tau)
@@ -330,7 +330,7 @@ The values of $\boldsymbol\alpha$ and $\boldsymbol\tau$ are specified by the {\t
 of {\tt glmnetLRC()}, respectively.  The values of $\boldsymbol\lambda$ depend on each $\alpha$ and are chosen algorithmically
 by {\tt glmnet()}, using the default values for the relevant arguments in {\tt glmnet()} and using the entire training dataset.
 
-So far in this discussion, we have made reference to a single random partition of the data into $m$ folds. 
+So far in this discussion, we have made reference to a single random partition of the data into $M$ folds. 
 Naturally, the estimates of the tuning parameters depend on the partition. A different partition will yield different
 estimates of the tuning parameters.  To ensure the final LRC is robust to the random 
 partitioning process, we repeat the training process for multiple partitions, or cross validation replicates, 
@@ -354,7 +354,7 @@ the final estimate of the tuning parameters is obtained by calculating the media
 data (via \eqref{eq:penalized_likelihood}) using the final estimates of the tuning parameters \eqref{eq:final_tuning}, 
 which gives rise to the final LRC:
 \begin{align}
-f^\star \equiv f \bigl(\mathbf{x},\hat{\boldsymbol{\beta}}(\hat\alpha^\star,\hat\lambda^\star), \hat\tau^\star \bigr)
+f^\star \equiv f \bigl(\mathbf{x}, ~\hat{\boldsymbol{\beta}}(\hat\alpha^\star, \hat\lambda^\star), ~\hat\tau^\star \bigr)
 \end{align}
 \noindent Calling the {\tt predict()} method on the object returned by {\tt glmnetLRC()} uses $f^\star$ to classify
 new observations.  Likewise, calling the {\tt coef()} method on the object returned by {\tt glmnetLRC()} returns 
@@ -364,15 +364,16 @@ $\hat{\boldsymbol\beta}(\hat\alpha^\star,\hat\lambda^\star)$.
 
 A measure of overall performance for the LRC is provided by the cross validation estimate of the risk. Extending
 \eqref{eq:cv_map}, let $\delta_1, \ldots, \delta_J$
-represent the partition mappings of the $J$ cross validation replicates.  For each replicate $j$, we obtain $(\hat\alpha_j, 
-\hat\lambda_j, \hat\tau_j)$ as defined by \eqref{eq:tuning_estimates}.  Using those tuning parameter estimates, a
-corresponding set of regression
-parameter estimates, $\hat{\boldsymbol{\beta}}^{-k}(\hat\alpha_j,\hat\lambda_j)$, are obtained using \eqref{eq:penalized_likelihood} 
-for each of the $m$ folds in replicate $j$.  The estimate of the risk for replicate $j$ is given by applying \eqref{eq:risk} as follows:
+represent the same partition mappings of the $J$ cross validation replicates that were used to train the LRC. 
+Using the final tuning parameter estimates $(\hat\alpha^\star,\hat\lambda^\star)$ defined by \eqref{eq:final_tuning}, 
+a corresponding set of regression parameter estimates, $\hat{\boldsymbol\beta}_j^{-k}(\hat\alpha^\star,\hat\lambda^\star)$, 
+are obtained using \eqref{eq:penalized_likelihood} 
+for each of the $M$ folds in replicate $j$.  The estimate of the risk for replicate $j$ is given by applying \eqref{eq:risk} 
+as follows:
 \begin{align}
 \label{eq:final_risk_j}
-R_j  = \frac{1}{N}\sum_{i=1}^N L \Bigl(y_i, f\bigl(\mathbf{x}_i,
-~\hat{\boldsymbol{\beta}}^{-\delta_j(i)}(\hat\alpha_j,\hat\lambda_j),  ~\hat\tau_j \bigr) \Bigr)
+R_j  = \sum_{i=1}^N w_i L \Bigl(y_i, ~ f\bigl(\mathbf{x}_i,
+~\hat{\boldsymbol\beta}_j^{-\delta_j(i)}(\hat\alpha^\star,\hat\lambda^\star),  ~\hat\tau^\star \bigr) \Bigr) \bigg/ \sum_{i=1}^N w_i
 \end{align}
 The value of $R_j$ is calculated for $j = 1,\ldots,J$ and summarized using the mean and standard deviation
 in the usual way:

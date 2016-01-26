@@ -4,7 +4,7 @@
 \name{testdata}
 \alias{testdata}
 \title{Test data set from the Vorbitrap mass spectrometry instrument}
-\format{A dataframe with 100 observations and 96 variables}
+\format{A dataframe with 99 observations and 96 variables}
 \description{
 Test data set from the Vorbitrap mass spectrometry instrument
 }

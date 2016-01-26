@@ -48,19 +48,23 @@ calcLoss <- function(truthLabels, predLabels, lossMat,
                      lossWeight = rep(1, length(truthLabels)),
                      aggregate = TRUE) {
 
-  # Checks
+  # Checks of types
   Smisc::stopifnotMsg(
     is.factor(truthLabels), "'truthLabels' must be a factor",
     is.factor(predLabels), "'predLabels' must be a factor",
     inherits(lossMat, "lossMat"), "'lossMat' must inherit from 'lossMat'",
-    length(truthLabels) == length(predLabels), "'truthLabels' and 'predLabels' must have the same length",
-    length(truthLabels) == length(lossWeight), "'truthLabels' and 'lossWeight' must have the same length",
     is.numeric(lossWeight), "'lossWeight' must be numeric",
-    sum(lossWeight) > 0, "the sum of 'lossWeight' must be greater than 0",
-    all(lossWeight >= 0), "all the values of 'lossWeight' must be non-negative",
-    length(aggregate) == 1, "'aggregate' must be of length 1",
     is.logical(aggregate), "'aggregate' must be TRUE or FALSE")
 
+  # Checks of constraints
+  Smisc::stopifnotMsg(
+    length(truthLabels) == length(predLabels), "'truthLabels' and 'predLabels' must have the same length",
+    length(truthLabels) == length(lossWeight), "'truthLabels' and 'lossWeight' must have the same length",
+    sum(lossWeight) > 0, "the sum of 'lossWeight' must be greater than 0",
+    all(lossWeight >= 0), "all the values of 'lossWeight' must be non-negative",
+    length(aggregate) == 1, "'aggregate' must be of length 1")
+      
+  
   # Convert the factors to characters and paste together
   tpData <- data.frame(truthLabels = truthLabels,
                        predLabels = predLabels,

@@ -24,7 +24,7 @@ be the same length as \code{truthLabels} and \code{predLabels}.}
 }
 \value{
 An object of class \code{lossMat}: a dataframe that contains
-all the information of the loss matrix to be used by \code{calcLoss}
+all the information of the loss matrix to be used by in calculating the loss.
 }
 \description{
 Build an arbitrary loss matrix for discrete classification

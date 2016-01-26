@@ -40,10 +40,10 @@ as n-1 dummy variables in the matrix.}
 matrix of class \code{lossMat}, produced by \code{\link{lossMatrix}}, that specifies
 the penalties for classification errors.}
 
-\item{lossWeight}{A vector of weights used to calculate the expected loss, one weight for each
-observation. The default value is 1 for each observation.}
+\item{lossWeight}{A vector of non-negative weights used to calculate the expected loss. The default value is 1 for
+each observation.}
 
-\item{alphaVec}{A vector of potential values for the elastic net mixing parameter,
+\item{alphaVec}{A sequence in [0, 1] designating possible values for the elastic-net mixing parameter,
 \eqn{\alpha}. A value of \eqn{\alpha = 1} is the lasso penalty, \eqn{\alpha = 0} is the ridge penalty.
 Refer to \code{\link{glmnet}} for further information.}
 
@@ -92,16 +92,16 @@ the optimal parameters to estimate the loss for each cross validation replicate.
 the progress of the training algorithm.}
 
 \item{x}{For the \code{print} and \code{plot} methods:  an object of class \code{glmnetLRC} (returned
-by \code{glmnetLRC()}), which contains the optimally-trained elastic net logistic regression classifier.}
+by \code{glmnetLRC()}), which contains the optimally-trained elastic-net logistic regression classifier.}
 
 \item{object}{For the \code{coef}, \code{predict}, and \code{extract} methods:
 an object of class \code{glmnetLRC} (returned by \code{glmnetLRC()})
-which contains the optimally-trained elastic net logistic regression classifier.}
+which contains the optimally-trained elastic-net logistic regression classifier.}
 
 \item{newdata}{A dataframe or matrix containing the new set of observations to
 be predicted, as well as an optional column of true labels.
 \code{newdata} must contain all of the column names that were used
-to fit the elastic net logistic regression classifier.}
+to fit the elastic-net logistic regression classifier.}
 
 \item{truthCol}{The column number or column name in \code{newdata} that contains the
 true labels. Optional.}
@@ -110,13 +110,13 @@ true labels. Optional.}
 column names) that will be 'kept' and returned with the predictions. Optional.}
 
 \item{\dots}{For \code{glmnetLRC()}, these are additional arguments to \code{\link{glmnet}} in the \pkg{glmnet} package.
-Certain arguments of \code{\link{glmnet}} are reserved by \code{glmnetLRC} and an error message will make that
-clear.  In particular, these include arguments that control the behavior of \eqn{\alpha} and \eqn{\lambda}.
-For the \code{plot} method, the \dots are additional arguments to default S3 method \code{\link{pairs}}.  And for
-the \code{print}, \code{coef}, \code{predict}, and \code{extract} methods, the \dots are ignored.}
+Certain arguments of \code{\link{glmnet}} are reserved by the \pkg{glmnetLRC} package and an error message will make that
+clear if they are used.  In particular, arguments that control the behavior of \eqn{\alpha} and \eqn{\lambda} are reserved.
+For the \code{plot} method, the "\dots" are additional arguments to the default S3 method \code{\link{pairs}}.  And for
+the \code{print}, \code{coef}, \code{predict}, and \code{extract} methods, the "\dots" are ignored.}
 }
 \value{
-Returns an object of class \code{glmnetLRC}, which
+An object of class \code{glmnetLRC}, which
 inherits from classes \code{lognet} and \code{glmnet}.  It contains the
 object returned by \code{\link{glmnet}} that has been fit to all the data using
 the optimal parameters \eqn{(\alpha, \lambda, \tau)}.
@@ -127,14 +127,14 @@ It also contains the following additional elements:
 the expected loss for each cross validation replicate.  Used by the \code{plot} method.}
 \item{optimalParms}{A named vector that contains the final estimates of \eqn{(\alpha, \lambda, \tau)}, calculated as the
 element-wise median of \code{parms}}
-\item{lossEstimates}{If \code{estimateLoss = TRUE}, this element contains a data frame with the expected loss
+\item{lossEstimates}{If \code{estimateLoss = TRUE}, this element is a data frame with the expected loss
 for each cross validation replicate}
 }
 }
 \description{
 This functions extends the \code{\link{glmnet}} and \code{\link{cv.glmnet}}
 functions from the \pkg{glmnet}
-package. It uses cross validation to identify optimal elastic net parameters and a
+package. It uses cross validation to identify optimal elastic-net parameters and a
 threshold parameter for binary classification, where optimality is defined
 by minimizing an arbitrary, user-specified discrete loss function.
 }
@@ -143,7 +143,7 @@ For a given partition of the training data, cross validation is
 performed to estimate the optimal values of
 \eqn{\alpha} (the mixing parameter of the ridge and lasso penalties) and \eqn{\lambda}
 (the regularization parameter), as well as the optimal threshold, \eqn{\tau},
-which is used to dichotomize the probability predictions of the elastic net
+which is used to dichotomize the probability predictions of the elastic-net
 logistic regression model into binary outcomes.
 (Specifically, if the probability an observation
 belongs to the second level of \code{truthLabels} exceeds \eqn{\tau}, it is
@@ -153,7 +153,7 @@ loss function created using \code{\link{lossMatrix}}.  The expected loss is calc
 that each observation in the data receives equal weight
 
 \code{glmnetLRC()} searches for the optimal values of \eqn{\alpha} and \eqn{\tau} by
-fitting the elastic net model at the points of the two-dimensional grid defined by
+fitting the elastic-net model at the points of the two-dimensional grid defined by
 \code{alphaVec} and \code{tauVec}.  For each value of \eqn{\alpha}, the vector of
 \eqn{\lambda}
 values is selected automatically by \code{\link{glmnet}} according to its default
@@ -166,7 +166,7 @@ This process is repeated \code{cvReps} times, where each time a different random
 partition of the data is created using its own seed, resulting in another
 'optimal' estimate of \eqn{(\alpha,\lambda,\tau)}.  The final estimate of
 \eqn{(\alpha,\lambda,\tau)} is given by the respective medians of those estimates.
-The final elastic net logistic regression classfier is given by fitting the regression
+The final elastic-net logistic regression classfier is given by fitting the regression
 coefficients to all the training data using the optimal \eqn{(\alpha,\lambda,\tau)}.
 
 The methodology is discussed in detail in the Appendix of the package vignette.
@@ -186,7 +186,7 @@ This can provide a sense of the stability of the estimates of the tuning
 parameters.
 
 \item \code{coef}: Calls the \code{\link{predict}} method in \pkg{glmnet}
-on the fitted glmnet object and returns a named vector of the non-zero elastic net logistic
+on the fitted glmnet object and returns a named vector of the non-zero elastic-net logistic
 regression coefficients using the optimal values of \eqn{\alpha} and \eqn{\lambda}.
 
 \item \code{predict}: Predict (or classify) new data from an \code{glmnetLRC} object.
@@ -224,7 +224,7 @@ lM <- lossMatrix(c("good","good","poor","poor"),
 # Display the loss matrix
 lM
 
-# Train the elastic net classifier (we don't run it here because it takes a long time)
+# Train the elastic-net classifier (we don't run it here because it takes a long time)
 \dontrun{
 glmnetLRC_fit <- glmnetLRC(response, predictors, lossMat = lM, estimateLoss = TRUE,
                            nJobs = parallel::detectCores())

@@ -1,7 +1,7 @@
 ##' Training data set from the Vorbitrap mass spectrometry instrument
 ##'
 ##' @docType data
-##' @format A dataframe with 467 observations and 99 variables
+##' @format A dataframe with 325 observations and 99 variables
 ##' @references
 ##' Amidan BG, Orton DJ, LaMarche BL, Monroe ME, Moore RJ,
 ##' Venzin AM, Smith RD, Sego LH, Tardiff MF, Payne SH. 2014.

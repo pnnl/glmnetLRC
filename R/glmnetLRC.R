@@ -2,7 +2,7 @@
 ##'
 ##' This functions extends the \code{\link{glmnet}} and \code{\link{cv.glmnet}}
 ##' functions from the \pkg{glmnet}
-##' package. It uses cross validation to identify optimal elastic net parameters and a
+##' package. It uses cross validation to identify optimal elastic-net parameters and a
 ##' threshold parameter for binary classification, where optimality is defined
 ##' by minimizing an arbitrary, user-specified discrete loss function.
 ##'
@@ -11,7 +11,7 @@
 ##' performed to estimate the optimal values of
 ##' \eqn{\alpha} (the mixing parameter of the ridge and lasso penalties) and \eqn{\lambda}
 ##' (the regularization parameter), as well as the optimal threshold, \eqn{\tau},
-##' which is used to dichotomize the probability predictions of the elastic net
+##' which is used to dichotomize the probability predictions of the elastic-net
 ##' logistic regression model into binary outcomes.
 ##' (Specifically, if the probability an observation
 ##' belongs to the second level of \code{truthLabels} exceeds \eqn{\tau}, it is
@@ -21,7 +21,7 @@
 ##' that each observation in the data receives equal weight
 ##'
 ##' \code{glmnetLRC()} searches for the optimal values of \eqn{\alpha} and \eqn{\tau} by
-##' fitting the elastic net model at the points of the two-dimensional grid defined by
+##' fitting the elastic-net model at the points of the two-dimensional grid defined by
 ##' \code{alphaVec} and \code{tauVec}.  For each value of \eqn{\alpha}, the vector of
 ##' \eqn{\lambda}
 ##' values is selected automatically by \code{\link{glmnet}} according to its default
@@ -34,7 +34,7 @@
 ##' partition of the data is created using its own seed, resulting in another
 ##' 'optimal' estimate of \eqn{(\alpha,\lambda,\tau)}.  The final estimate of
 ##' \eqn{(\alpha,\lambda,\tau)} is given by the respective medians of those estimates.
-##' The final elastic net logistic regression classfier is given by fitting the regression
+##' The final elastic-net logistic regression classfier is given by fitting the regression
 ##' coefficients to all the training data using the optimal \eqn{(\alpha,\lambda,\tau)}.
 ##'
 ##' The methodology is discussed in detail in the Appendix of the package vignette.
@@ -59,10 +59,10 @@
 ##' matrix of class \code{lossMat}, produced by \code{\link{lossMatrix}}, that specifies
 ##' the penalties for classification errors.
 ##'
-##' @param lossWeight A vector of weights used to calculate the expected loss, one weight for each
-##' observation. The default value is 1 for each observation.
+##' @param lossWeight A vector of non-negative weights used to calculate the expected loss. The default value is 1 for
+##' each observation.
 ##'
-##' @param alphaVec A vector of potential values for the elastic net mixing parameter,
+##' @param alphaVec A sequence in [0, 1] designating possible values for the elastic-net mixing parameter,
 ##' \eqn{\alpha}. A value of \eqn{\alpha = 1} is the lasso penalty, \eqn{\alpha = 0} is the ridge penalty.
 ##' Refer to \code{\link{glmnet}} for further information.
 ##'
@@ -111,13 +111,13 @@
 ##' the progress of the training algorithm.
 ##'
 ##' @param \dots For \code{glmnetLRC()}, these are additional arguments to \code{\link{glmnet}} in the \pkg{glmnet} package.
-##' Certain arguments of \code{\link{glmnet}} are reserved by \code{glmnetLRC} and an error message will make that
-##' clear.  In particular, these include arguments that control the behavior of \eqn{\alpha} and \eqn{\lambda}.
-##' For the \code{plot} method, the \dots are additional arguments to default S3 method \code{\link{pairs}}.  And for
-##' the \code{print}, \code{coef}, \code{predict}, and \code{extract} methods, the \dots are ignored.
+##' Certain arguments of \code{\link{glmnet}} are reserved by the \pkg{glmnetLRC} package and an error message will make that
+##' clear if they are used.  In particular, arguments that control the behavior of \eqn{\alpha} and \eqn{\lambda} are reserved.
+##' For the \code{plot} method, the "\dots" are additional arguments to the default S3 method \code{\link{pairs}}.  And for
+##' the \code{print}, \code{coef}, \code{predict}, and \code{extract} methods, the "\dots" are ignored.
 ##'
 ##' @return
-##' Returns an object of class \code{glmnetLRC}, which
+##' An object of class \code{glmnetLRC}, which
 ##' inherits from classes \code{lognet} and \code{glmnet}.  It contains the
 ##' object returned by \code{\link{glmnet}} that has been fit to all the data using
 ##' the optimal parameters \eqn{(\alpha, \lambda, \tau)}.
@@ -128,7 +128,7 @@
 ##' the expected loss for each cross validation replicate.  Used by the \code{plot} method.}
 ##' \item{optimalParms}{A named vector that contains the final estimates of \eqn{(\alpha, \lambda, \tau)}, calculated as the
 ##' element-wise median of \code{parms}}
-##' \item{lossEstimates}{If \code{estimateLoss = TRUE}, this element contains a data frame with the expected loss
+##' \item{lossEstimates}{If \code{estimateLoss = TRUE}, this element is a data frame with the expected loss
 ##' for each cross validation replicate}
 ##' }
 ##'
@@ -168,7 +168,7 @@
 ##' # Display the loss matrix
 ##' lM
 ##'
-##' # Train the elastic net classifier (we don't run it here because it takes a long time)
+##' # Train the elastic-net classifier (we don't run it here because it takes a long time)
 ##' \dontrun{
 ##' glmnetLRC_fit <- glmnetLRC(response, predictors, lossMat = lM, estimateLoss = TRUE,
 ##'                            nJobs = parallel::detectCores())
@@ -226,52 +226,45 @@ glmnetLRC <- function(truthLabels, predictors,
                       verbose = FALSE,
                       ...) {
 
-  # Check inputs
+  # Check argument types
   Smisc::stopifnotMsg(
     is.factor(truthLabels), "'truthLabels' must be a factor",
-    length(levels(truthLabels)) == 2, "'truthLabels' must have 2 levels",
-    NCOL(predictors) > 1, "'predictors' must have at least 2 columns",
     is.matrix(predictors), "'predictors' must be a matrix",
     is.numeric(predictors), "'predictors' must be a numeric",
-    length(truthLabels) == NROW(predictors), "the length of 'truthLabels' must match the number of rows in 'predictors'",
     is.numeric(lossWeight), "'lossWeight' must be a numeric vector",
+    is.numeric(alphaVec), "'alphaVec' must be numeric",
+    is.numeric(tauVec), "'tauVec' must be numeric",
+    is.numeric(cvFolds), "'cvFolds' must be numeric",
+    is.numeric(cvReps), "'cvReps' must be numeric",
+    is.logical(stratify), "'stratify' must be TRUE or FALSE",
+    is.numeric(masterSeed), "'masterSeed' must be numeric",
+    is.numeric(nJobs), "'nJobs' must be numeric",
+    is.logical(estimateLoss), "'estimateLoss' must be TRUE or FALSE",
+    is.logical(verbose), "'verbose' must have length 1")
+
+  # Further checks of argument values
+  Smisc::stopifnotMsg(
+    length(levels(truthLabels)) == 2, "'truthLabels' must have 2 levels",
+    NCOL(predictors) > 1, "'predictors' must have at least 2 columns",
+    length(truthLabels) == NROW(predictors), "the length of 'truthLabels' must match the number of rows in 'predictors'",
     length(lossWeight) == NROW(predictors), "the length of 'lossWeight' must match the number of rows in 'predictors'",
     all(lossWeight >= 0), "All values of 'lossWeight' must be non-negative",
-    is.numeric(alphaVec), "'alphaVec' must be numeric",
     all(alphaVec <= 1) & all(alphaVec >= 0), "All values of 'alphaVec' must be in [0, 1]",
-    is.numeric(tauVec), "'tauVec' must be numeric",
     all(tauVec < 1) & all(tauVec > 0), "All values of 'alphaVec' must be in (0, 1)",
-#    length(intercept) == 1, "'intercept' must be of length 1",
-#    is.logical(intercept), "'intercept' must be TRUE or FALSE",
     length(cvFolds) == 1, "'cvFolds' must be of length 1",
-    is.numeric(cvFolds), "'cvFolds' must be numeric",
     cvFolds %% 1 == 0, "'cvFolds' must be an integer",
     cvFolds >= 2, "'cvFolds' must be 2 or greater",
     cvFolds <= NROW(predictors), "'cvFolds' cannot be larger than the number of rows in 'predictors'",
     length(cvReps) == 1, "'cvReps' must be of length 1",
-    is.numeric(cvReps), "'cvReps' must be numeric",
     cvReps %% 1 == 0, "'cvReps' must be an integer",
     cvReps > 0, "'cvReps' must be 1 or larger",
     length(stratify) == 1, "'stratify' must be of length 1",
-    is.logical(stratify), "'stratify' must be TRUE or FALSE",
     length(masterSeed) == 1, "'masterSeed' must be of length 1",
-    is.numeric(masterSeed), "'masterSeed' must be numeric",
-    is.numeric(nJobs), "'nJobs' must be numeric",
     nJobs >= 1, "'nJobs' must be 1 or greater",
     nJobs %% 1 == 0, "'nJobs' must be an integer",
     length(estimateLoss) == 1, "'estimateLoss' must have length of 1",
-    is.logical(estimateLoss), "'estimateLoss' must be TRUE or FALSE",
-    length(verbose) == 1, "'verbose' must be TRUE or FALSE",
-    is.logical(verbose), "'verbose' must have length 1")
-
-  # Check for missing data
-  if (!all(complete.cases(truthLabels))) {
-    warning("'truthLabels' contains missing values which may upset 'glmnet::glmnet()'")
-  }  
-  if (!all(complete.cases(predictors))) {
-    warning("'predictors' contains missing values which may upset 'glmnet::glmnet()'")
-  }
-  
+    length(verbose) == 1, "'verbose' must be TRUE or FALSE")      
+     
   # Check the loss matrix
   lmGood <- FALSE
 
@@ -296,7 +289,16 @@ glmnetLRC <- function(truthLabels, predictors,
     stop("'lossMat' must be either '0-1' or an object of class 'lossMat' returned by 'lossMatrix()'")
   }
 
-
+  
+  # Check for missing data
+  if (!all(complete.cases(truthLabels))) {
+    warning("'truthLabels' contains missing values which may upset 'glmnet::glmnet()'")
+  }  
+  if (!all(complete.cases(predictors))) {
+    warning("'predictors' contains missing values which may upset 'glmnet::glmnet()'")
+  }
+  
+  
   # Gather arguments for glmnet
   glmnetArgs <- list(...)
 
@@ -313,16 +315,16 @@ glmnetLRC <- function(truthLabels, predictors,
     # Verify none of the off limit args have been used
     if (any(userArgs %in% offLimits)) {
       stop("The following arguments to glmnet::glmnet() are controlled and should not be supplied to '...':\n",
-           "'", paste(offLimts, collapse = "', '"), "'\n")
+           "'", paste(offLimits, collapse = "', '"), "'\n")
     }
 
     # Get the name of the glmnet args
-    glmnetArgs <- names(formals(glmnet::glmnet))
+    defaultArgs <- names(formals(glmnet::glmnet))
     
     # Verify that all the glmnent args provided match glmnet
-    if (!all(userArgs %in% glmnetArgs)) {
+    if (!all(userArgs %in% defaultArgs)) {
       stop("The following do not match the arguments in glmnet:glmnet():\n",
-           "'", paste(setdiff(userArgs, glmnetArgs), collapse = "', '"), "'\n")
+           "'", paste(setdiff(userArgs, defaultArgs), collapse = "', '"), "'\n")
     }
     
   }
@@ -386,10 +388,10 @@ glmnetLRC <- function(truthLabels, predictors,
   ################################################################################
   if (nJobs > 1) {
 
-    # Object names that will be needed in the cluster
+    # Names of objects that will be needed in the cluster
     neededObjects <- c("glmnetArgs",
-                       "alphaVec",
-                       "tauVec",
+#                       "alphaVec",
+#                       "tauVec",
                        "lossMat",
                        "lossWeight",
                        "cvFolds",
@@ -531,7 +533,7 @@ glmnetLRC <- function(truthLabels, predictors,
 ##' In addition, all of this same information is returned invisibly as a matrix.
 ##'
 ##' @param x For the \code{print} and \code{plot} methods:  an object of class \code{glmnetLRC} (returned
-##' by \code{glmnetLRC()}), which contains the optimally-trained elastic net logistic regression classifier.
+##' by \code{glmnetLRC()}), which contains the optimally-trained elastic-net logistic regression classifier.
 ##'
 ##' @export
 
@@ -628,12 +630,12 @@ plot.glmnetLRC <- function(x, ...){
 ##' @method coef glmnetLRC
 ##'
 ##' @describeIn glmnetLRC Calls the \code{\link{predict}} method in \pkg{glmnet}
-##' on the fitted glmnet object and returns a named vector of the non-zero elastic net logistic
+##' on the fitted glmnet object and returns a named vector of the non-zero elastic-net logistic
 ##' regression coefficients using the optimal values of \eqn{\alpha} and \eqn{\lambda}.
 ##'
 ##' @param object For the \code{coef}, \code{predict}, and \code{extract} methods:
 ##' an object of class \code{glmnetLRC} (returned by \code{glmnetLRC()})
-##' which contains the optimally-trained elastic net logistic regression classifier.
+##' which contains the optimally-trained elastic-net logistic regression classifier.
 ##'
 ##' @export
 
@@ -674,7 +676,7 @@ coef.glmnetLRC <- function(object, ...) {
 ##' @param newdata A dataframe or matrix containing the new set of observations to
 ##' be predicted, as well as an optional column of true labels.
 ##' \code{newdata} must contain all of the column names that were used
-##' to fit the elastic net logistic regression classifier.
+##' to fit the elastic-net logistic regression classifier.
 ##'
 ##' @param truthCol The column number or column name in \code{newdata} that contains the
 ##' true labels. Optional.

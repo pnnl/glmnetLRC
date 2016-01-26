@@ -41,7 +41,7 @@ single_glmnetLRC <- function(glmnetArgs,
 
     # Verify that in the training set we have at least 1 observation for each
     # level of the binary response
-    tablePreds <- table(truthLabels[trainSet])
+    tablePreds <- table(glmnetArgs$y[trainSet])
 
     # Make sure we have 2 levels in the table.  This error should never occur, because
     # we already checked that truthLabels is a factor with 2 levels
@@ -110,7 +110,6 @@ single_glmnetLRC <- function(glmnetArgs,
     # Get the lambdaVec for this particular alpha using all the data.
     if (is.null(lambdaVec)) {
 
-      browser()
       lambdaVec <- do.call(glmnet::glmnet, c(glmnetArgs, list(alpha = alpha)))$lambda
     
       ## lambdaVec <- glmnet::glmnet(predictors, truthLabels, weights = weight,
