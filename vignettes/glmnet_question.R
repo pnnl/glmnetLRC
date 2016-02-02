@@ -13,7 +13,6 @@ y <- as.numeric(response) - 1
 # Create 2 predictors that depend somewhat on the response
 preds <- matrix(c(rnorm(40, 0, 0.5) + y, rnorm(40, 2, 0.5) + y),
                 ncol = 2, dimnames = list(NULL, c("x1", "x2")))
-
 # Fit the glmnet with alpha = 0.7
 gfit <- glmnet(preds, response, family = "binomial", alpha = 0.7, standardize = FALSE)
 

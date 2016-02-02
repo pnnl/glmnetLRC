@@ -323,7 +323,7 @@ glmnetLRC <- function(truthLabels, predictors,
     
     # Verify that all the glmnent args provided match glmnet
     if (!all(userArgs %in% defaultArgs)) {
-      stop("The following do not match the arguments in glmnet:glmnet():\n",
+      stop("The following do not match the arguments in glmnet::glmnet():\n",
            "'", paste(setdiff(userArgs, defaultArgs), collapse = "', '"), "'\n")
     }
     

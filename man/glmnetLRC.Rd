@@ -132,7 +132,7 @@ for each cross validation replicate}
 }
 }
 \description{
-This functions extends the \code{\link{glmnet}} and \code{\link{cv.glmnet}}
+This function extends the \code{\link{glmnet}} and \code{\link{cv.glmnet}}
 functions from the \pkg{glmnet}
 package. It uses cross validation to identify optimal elastic-net parameters and a
 threshold parameter for binary classification, where optimality is defined
