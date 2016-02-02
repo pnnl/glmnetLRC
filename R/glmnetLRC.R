@@ -1,6 +1,6 @@
 ##' Lasso and elastic-net logistic regression classifier (LRC) with arbitrary loss function
 ##'
-##' This functions extends the \code{\link{glmnet}} and \code{\link{cv.glmnet}}
+##' This function extends the \code{\link{glmnet}} and \code{\link{cv.glmnet}}
 ##' functions from the \pkg{glmnet}
 ##' package. It uses cross validation to identify optimal elastic-net parameters and a
 ##' threshold parameter for binary classification, where optimality is defined
@@ -646,7 +646,7 @@ coef.glmnetLRC <- function(object, ...) {
   }
 
   # Reset the class so that predicting methods work more easily
-  class(object) <- setdiff(class(object), "glmnetLRC")
+#  class(object) <- setdiff(class(object), "glmnetLRC")
 
   # Verify the optimal lambda is in there (it should be)
   if (!(object$optimalParms[["lambda"]] %in% object$lambda)) {
@@ -654,7 +654,7 @@ coef.glmnetLRC <- function(object, ...) {
   }
 
   # Get the matrix of coefs for the optimal lambda
-  coefs <- as.matrix(predict(object,
+  coefs <- as.matrix(predict(extract(object),
                              s = object$optimalParms[["lambda"]],
                              type = "coefficients"))
 
@@ -753,7 +753,7 @@ predict.glmnetLRC <- function(object,
                        levels = c(FALSE, TRUE),
                        labels = glmnetObject$classnames)
 
-  # If there were rownames in newdata, add them in
+  # If there are rownames in newdata, add them in
   if (!is.null(rn <- rownames(newdata))) {
     names(predLabels) <- rn
   }

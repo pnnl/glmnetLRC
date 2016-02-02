@@ -75,11 +75,12 @@ calcLoss <- function(truthLabels, predLabels, lossMat,
   tpD <- merge(tpData, lossMat, all.x = TRUE, sort = FALSE)
 
   # Verify there weren't any data for which we couldn't calculate the loss
-  if (!all(cc <- complete.cases(tpD))) 
+  if (!all(cc <- complete.cases(tpD))) {
     warning("One or more observations could not be matched to a coresponding\n",
             "truth/predicted label pair in the loss matrix")
+  }
 
-  # Retun the loss as requested
+  # Return the loss as requested
   if (!aggregate) {
     return(tpD[order(tpD$index),
                c("truthLabels", "predLabels", "lossWeight", "loss")])

@@ -2,9 +2,9 @@
 # https://github.com/hadley/testthat/issues/144
 # https://github.com/hadley/testthat/issues/86
 # revert this when that issue in R is fixed.
-## Sys.setenv("R_TESTS" = "")
+Sys.setenv("R_TESTS" = "")
 
-## library(testthat)
-## library(lrc)
+library(testthat)
+library(glmnetLRC)
 
-## test_check("lrc")
+test_check("glmnetLRC")

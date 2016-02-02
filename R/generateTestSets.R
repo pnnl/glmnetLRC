@@ -39,6 +39,8 @@ createSeeds <- function(masterSeed, cvReps) {
 
 generateTestSets <- function(truthLabels, cvFolds, cvReps, masterSeed, stratify) {
 
+   # All the arguments above are passed directly from glmnetLRC()
+    
    # The number of observations
    n <- length(truthLabels)
   
@@ -71,6 +73,9 @@ generateTestSets <- function(truthLabels, cvFolds, cvReps, masterSeed, stratify)
    ################################################################################
    else {
 
+     # This is only designed for two levels!
+     Smisc::stopifnotMsg(nlevels(truthLabels) == 2, "There must be 2 levels in 'truthLabels' when 'stratify = TRUE'")
+       
      # Create a mapping for each level of the truthLabels
      level1indexes <- which(truthLabels == levels(truthLabels)[1])
      level2indexes <- which(truthLabels == levels(truthLabels)[2])
@@ -123,11 +128,11 @@ generateTestSets <- function(truthLabels, cvFolds, cvReps, masterSeed, stratify)
        check <- sort(unlist(res))
 
        if (length(check) != n) {
-         stop("Algorithm for generating stratified cross validation folds failed, incorrect length")
+         stop("generateTestSets():  Algorithm for generating stratified cross validation folds failed, incorrect length")
        }
 
        if (!all(check == 1:n)) {
-         stop("Algorithm for generating stratified cross validation folds failed, incorrect indexes")            
+         stop("generateTestSets(): Algorithm for generating stratified cross validation folds failed, incorrect indexes")            
        }
 
        # Return results
