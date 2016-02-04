@@ -38,18 +38,6 @@
 ## loss (for \code{newData}) is given by \code{weightedSumLoss} divided by
 ## \code{sumWeights}.
 
-################################################################################
-# TESTS TO DO
-#
-# On prediction, what happens if extra columns are presented in newdata?
-# 1) Usually prediction on fits only makes sense if the subspace where newdata
-# lies is in the same subspace as the training data
-# What happens if not all the predictors are in newdata?
-# 2) Same
-# What happens with missing data in newdata?
-# What happens if column names are not provided in newdata?
-################################################################################
-
 predLoss_glmnetLRC <- function(glmnetFit, newData, truthLabels, lossMat,
                                tauVec = seq(0.1, 0.9, by = 0.1), 
                                lossWeight = rep(1, NROW(newData)),

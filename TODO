@@ -1,5 +1,6 @@
-*  Unit testing code (using all the various methods of partitioning), testing 0-1 lossMat, etc.
-
+* Finish final line of testing in test-glmnetLRC.R
+* Recreate the glmnetLRC object that takes a long time to run
+* Test tests
 * After testing, Remove commented code in single_LRCglmnet.R and other files
-
-* Document expected loss weights in vignette
+* CRAN checks
+* push to github
