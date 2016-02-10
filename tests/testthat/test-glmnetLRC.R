@@ -6,7 +6,7 @@ if (!require(glmnet)) {
 }
 
 # Load the Smisc namespace
-if (!requireNameSpace("Smisc")) {
+if (!requireNamespace("Smisc")) {
   stop("The 'Smisc' namespace must be available for this test")
 }
 
@@ -48,8 +48,8 @@ test_that("Order of loss matrix specification doesn't make a difference", {
    expect_equal(coef(gfitNewLoss), coef(gfit))
 
    # Get the printed objects
-   g1 <- print(gfit)
-   g2 <- print(gfitNewLoss)
+   g1 <- print(gfit, verbose = FALSE)
+   g2 <- print(gfitNewLoss, verbose = FALSE)
    
    expect_equal(g1, g2)
         
@@ -59,7 +59,7 @@ test_that("Order of loss matrix specification doesn't make a difference", {
 test_that("Final glmnet model matches manual fitting", {
 
   # Get optimal parms
-  lambda <- print(gfit)[,"lambda"]
+  lambda <- print(gfit, verbose = FALSE)[,"lambda"]
 
   # Get lambdaVec
   lambdaVec <- gfit$lambda
@@ -111,7 +111,7 @@ test_that("Testing intercept only model with manual fitting", {
                     standardize = FALSE, intercept = FALSE)
 
   # Get optimal parms
-  lambda <- print(gfit)[,"lambda"]
+  lambda <- print(gfit, verbose = FALSE)[,"lambda"]
 
   # Get lambdaVec
   lambdaVec <- gfit$lambda
@@ -209,7 +209,7 @@ test_that("Objects returned by glmnetLRC() remains unchanged", {
 
   # Tests
   expect_equal(gp.c, gp)
-  expect_equal(print(gp.c), print(gp))
+  expect_equal(print(gp.c, verbose = FALSE), print(gp, verbose = FALSE))
   expect_equal(coef(gp.c), coef(gp))
   expect_equal(extract(gp.c), extract(gp))
 
@@ -231,7 +231,7 @@ test_that("Objects returned by glmnetLRC() remains unchanged", {
 
   # Tests
   expect_equal(gp1.c, gp1)
-  expect_equal(print(gp1.c), print(gp1))
+  expect_equal(print(gp1.c, verbose = FALSE), print(gp1, verbose = FALSE))
   expect_equal(coef(gp1.c), coef(gp1))
   expect_equal(extract(gp1.c), extract(gp1))
 
@@ -260,7 +260,7 @@ test_that("Compare parallel and non-parallel processing", {
   expect_equal(gp, gnp)
 
   # Test the methods
-  expect_equal(print(gp), print(gnp))
+  expect_equal(print(gp, verbose = FALSE), print(gnp, verbose = FALSE))
   expect_equal(coef(gp), coef(gnp))
   expect_equal(extract(gp), extract(gnp))
 
@@ -290,7 +290,7 @@ test_that("Test the behavior of the predict method", {
   colnames(tmp) <- paste(colnames(tmp), "extra", sep = "_")
   tdata <- cbind(testdata, tmp)
 
-  # Try the predict method
+  # These two predictions should be the same
   np1 <- predict(gp, tdata, keepCols = 2)
   np2 <- predict(gp, testdata, keepCols = 2)
 
@@ -302,16 +302,27 @@ test_that("Test the behavior of the predict method", {
   # Insert some missing values in testdata.  Notice that if one of the coefficients is 0, is can be missing
   tdata <- testdata
 
-  # This predictors have non-zero coefs
+  # These predictors have non-zero coefs
   tdata[5, "P_2C"] <- NA
   tdata[27, "MS2_Density_Q1"] <- NA
 
-  # This predictor has zero coef
-  tdata[50, ""] <- NA
+  # These predictors have zero coef
+  tdata[50, "IS_3C"] <- NA
+  tdata[89, "MS2_4D"] <- NA
 
   # But we only have 2 missing predictions
   np3 <- predict(gp, tdata)
   expect_equal(sum(is.na(np3)), 2)
 
+  # Predictions of non-missing values should be the same
+  np4 <- predict(gp, testdata, truthCol = 8, keepCols = 2)
+  np5 <- predict(gp, tdata, truthCol = "Curated_Quality", keepCols = 2)
+
+  expect_equal(nrow(np4), nrow(np5))
+
+  # After accounting for NA's, verify they're equal
+  cc <- complete.cases(np5)
+  expect_equal(np4[cc,], np5[cc,])
+  
 })
 
