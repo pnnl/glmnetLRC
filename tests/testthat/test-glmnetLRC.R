@@ -200,9 +200,9 @@ data(testdata, package = "glmnetLRC")
 test_that("Objects returned by glmnetLRC() remains unchanged", {
 
   gp <- glmnetLRC(response, predictors, alphaVec = c(0.8, 1),
-                    tauVec = c(0.4, 0.5, 0.6), cvReps = 2,
-                    lossMat = lM, nJobs = 2, masterSeed = 6,
-                    estimateLoss = TRUE)
+                  tauVec = c(0.4, 0.5, 0.6), cvReps = 2,
+                  lossMat = lM, nJobs = 2, masterSeed = 6,
+                  estimateLoss = TRUE)
 
 #  save(gp, file = "../datasets/gp.Rdata")
   gp.c <- Smisc::loadObject("../datasets/gp.Rdata")

@@ -33,7 +33,9 @@
 
 \section{Introduction}
 
-The {\tt glmnetLRC} package extends the {\tt glmnet} package by making it possible to train lasso or elastic-net logistic 
+The {\tt glmnetLRC} package makes it easy to create a binary classifier that uses virtually any number of quantitative predictors to
+assign an example, or observation, to one of two classes.
+It extends the {\tt glmnet} package by making it possible to train lasso or elastic-net logistic 
 regression classifiers (LRC's) using a customized, discrete loss function to measure the classification error.  
 This allows users to assign unique 
 loss values to false positive and false negative errors. The logistic regression parameter
@@ -45,7 +47,7 @@ will be used here to demonstrate how to train your own classifier.
 
 In the sections that follow, we show how to use the {\tt glmnetLRC} package to train LRC models, create diagnostic plots,
 extract coefficients, predict the binary class of new observations, and summarize the performance of those
-predictions. The details of the algorithms used by the package are provided in the Appendix.
+predictions. The details of the algorithms used by the package are provided in final section of the document.
 
 \section{Training}
 
@@ -97,8 +99,8 @@ lM
 To train an elastic-net model, the user needs to supply a handful of arguments to {\tt glmnetLRC()}. 
 The mandatory arguments are the true class labels, {\tt truthLabels} (which, in this case, is, is the {\tt response} 
 object we created above), the matrix of predictor variables, {\tt predictors}, 
-and the loss matrix {\tt lossMat}. Noteworthy additional arguments include {\tt tauVec}, a vector of potential 
-thresholds $\tau \in (0, 1)$ that are used to dichotomize the predicted probabilities from the logistic regression 
+and the loss matrix {\tt lossMat}. Noteworthy additional arguments include {\tt tauVec}, a vector of potential values of the 
+threshold parameter $\tau \in (0, 1)$ that are used to dichotomize the predicted probabilities from the logistic regression 
 into two class labels; {\tt alphaVec}, a vector of potential values of the elastic-net mixing parameter 
 $\alpha \in [0, 1]$; {\tt cvFolds}, the number of cross validation folds; {\tt cvReps}, the number of times
 the cross validation process is repeated with a different random partition of the data, and {\tt masterSeed}, which controls 
@@ -212,13 +214,7 @@ for a given cross validation replicate.}
 \end{center}
 \end{figure}
 
-%\nocite{*}
-\bibliographystyle{apacite}
-\bibliography{References}
-
-\newpage
-
-\section{Appendix}
+\section{Mathematical Details}
 We present in detail the algorithm used by the {\tt glmnetLRC} package to identify the optimal parameter estimates
 for a logistic regression classifier (LRC) with variables selection implemented by an elastic-net.  
 
@@ -382,5 +378,10 @@ in the usual way:
 \end{align}
 The values of $\bar{R}$ and $\sigma_R$ are obtained by calling {\tt glmnetLRC()} with the argument {\tt estimateLoss = TRUE}
 and then printing the resulting object.
+
+%\nocite{*}
+\bibliographystyle{apacite}
+\bibliography{References}
+
 
 \end{document}

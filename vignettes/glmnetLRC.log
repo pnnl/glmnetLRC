@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.15 (TeX Live 2014) (preloaded format=pdflatex 2014.5.25)  25 JAN 2016 17:16
+This is pdfTeX, Version 3.14159265-2.6-1.40.15 (TeX Live 2014) (preloaded format=pdflatex 2014.5.25)  10 FEB 2016 12:21
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -520,19 +520,19 @@ File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 <glmnetLRC-plot.pdf, id=26, 433.62pt x 433.62pt>
 File: glmnetLRC-plot.pdf Graphic file (type pdf)
  <use glmnetLRC-plot.pdf>
-Package pdftex.def Info: glmnetLRC-plot.pdf used on input line 301.
+Package pdftex.def Info: glmnetLRC-plot.pdf used on input line 303.
 (pdftex.def)             Requested size: 375.80544pt x 375.8238pt.
 
-[5] (./glmnetLRC.bbl) [6 <./glmnetLRC-plot.pdf>] [7] [8] [9] (./glmnetLRC.aux) 
+[5] [6 <./glmnetLRC-plot.pdf>] [7] [8] (./glmnetLRC.bbl) [9] (./glmnetLRC.aux) 
 ) 
 Here is how much of TeX's memory you used:
  6268 strings out of 493117
  86547 string characters out of 6135433
- 179321 words of memory out of 5000000
+ 180321 words of memory out of 5000000
  9552 multiletter control sequences out of 15000+600000
  37920 words of font info for 93 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 38i,13n,26p,271b,345s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 38i,13n,26p,271b,341s stack positions out of 5000i,500n,10000p,200000b,80000s
 </usr/local/texlive/2014/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb>
 </usr/local/texlive/2014/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb><
 /usr/local/texlive/2014/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></
@@ -553,7 +553,7 @@ ve/2014/texmf-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb></usr/local/texliv
 e/2014/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb></usr/local/texlive
 /2014/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt12.pfb></usr/local/texlive/
 2014/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm7.pfb>
-Output written on glmnetLRC.pdf (9 pages, 243273 bytes).
+Output written on glmnetLRC.pdf (9 pages, 243443 bytes).
 PDF statistics:
  124 PDF objects out of 1000 (max. 8388607)
  89 compressed objects within 1 object stream
