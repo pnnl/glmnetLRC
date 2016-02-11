@@ -14,7 +14,7 @@ glmnetLRC(truthLabels, predictors, lossMat = "0-1", lossWeight = rep(1,
   by = 0.05), cvFolds = 5, cvReps = 100, stratify = FALSE,
   masterSeed = 1, nJobs = 1, estimateLoss = FALSE, verbose = FALSE, ...)
 
-\method{print}{glmnetLRC}(x, ...)
+\method{print}{glmnetLRC}(x, verbose = TRUE, ...)
 
 \method{plot}{glmnetLRC}(x, ...)
 
@@ -88,8 +88,10 @@ net model for each cross validation fold. This can be computationally expensive,
 as it requires another cross validation pass through the same partitions of the data, but using only
 the optimal parameters to estimate the loss for each cross validation replicate.}
 
-\item{verbose}{A logical, set to \code{TRUE} to receive messages regarding
-the progress of the training algorithm.}
+\item{verbose}{For \code{glmetLRC}, a logical to turn on (or off) messages regarding
+the progress of the training algorithm.  For the \code{print} method, if set to \code{FALSE}, it
+will suppress printing information about the \code{glmnetLRC} object and only invisibly return
+the results.}
 
 \item{x}{For the \code{print} and \code{plot} methods:  an object of class \code{glmnetLRC} (returned
 by \code{glmnetLRC()}), which contains the optimally-trained elastic-net logistic regression classifier.}
@@ -177,7 +179,8 @@ The methodology is discussed in detail in the Appendix of the package vignette.
 \eqn{(\alpha, \lambda, \tau)}, with the corresponding degrees of freedom and
 deviance for the model fit to all the data using the optimzed parameters.  If \code{estimateLoss = TRUE}
 when \code{glmnetLRC()} was called, the mean and standard deviation of the expected loss are also shown.
-In addition, all of this same information is returned invisibly as a matrix.
+In addition, all of this same information is returned invisibly as a matrix. Display of the information
+can be suppressed by setting \code{verbose = FALSE} in the call to \code{print}.
 
 \item \code{plot}: Produces a pairs plot of the tuning parameters
 \eqn{(\alpha, \lambda, \tau)} and their univariate histograms that

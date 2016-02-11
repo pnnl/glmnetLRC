@@ -37,7 +37,7 @@
 ##' The final elastic-net logistic regression classfier is given by fitting the regression
 ##' coefficients to all the training data using the optimal \eqn{(\alpha,\lambda,\tau)}.
 ##'
-##' The methodology is discussed in detail in the Appendix of the package vignette.
+##' The methodology is discussed in detail in the package vignette.
 ##'
 ##' @author Landon Sego, Alex Venzin
 ##'
@@ -107,8 +107,10 @@
 ##' as it requires another cross validation pass through the same partitions of the data, but using only
 ##' the optimal parameters to estimate the loss for each cross validation replicate.
 ##'
-##' @param verbose A logical, set to \code{TRUE} to receive messages regarding
-##' the progress of the training algorithm.
+##' @param verbose For \code{glmetLRC}, a logical to turn on (or off) messages regarding
+##' the progress of the training algorithm.  For the \code{print} method, if set to \code{FALSE}, it
+##' will suppress printing information about the \code{glmnetLRC} object and only invisibly return
+##' the results.
 ##'
 ##' @param \dots For \code{glmnetLRC()}, these are additional arguments to \code{\link{glmnet}} in the \pkg{glmnet} package.
 ##' Certain arguments of \code{\link{glmnet}} are reserved by the \pkg{glmnetLRC} package and an error message will make that
@@ -249,6 +251,7 @@ glmnetLRC <- function(truthLabels, predictors,
     length(truthLabels) == NROW(predictors), "the length of 'truthLabels' must match the number of rows in 'predictors'",
     length(lossWeight) == NROW(predictors), "the length of 'lossWeight' must match the number of rows in 'predictors'",
     all(lossWeight >= 0), "All values of 'lossWeight' must be non-negative",
+    !all(lossWeight == 0), "Not all of the 'lossWeight' values can be zero",
     all(alphaVec <= 1) & all(alphaVec >= 0), "All values of 'alphaVec' must be in [0, 1]",
     all(tauVec < 1) & all(tauVec > 0), "All values of 'alphaVec' must be in (0, 1)",
     length(cvFolds) == 1, "'cvFolds' must be of length 1",
@@ -314,7 +317,7 @@ glmnetLRC <- function(truthLabels, predictors,
 
     # Verify none of the off limit args have been used
     if (any(userArgs %in% offLimits)) {
-      stop("The following arguments to glmnet::glmnet() are controlled and should not be supplied to '...':\n",
+      stop("The following arguments to glmnet::glmnet() are controlled (or not relevant) and should not be supplied to '...':\n",
            "'", paste(offLimits, collapse = "', '"), "'\n")
     }
 
@@ -530,14 +533,15 @@ glmnetLRC <- function(truthLabels, predictors,
 ##' \eqn{(\alpha, \lambda, \tau)}, with the corresponding degrees of freedom and
 ##' deviance for the model fit to all the data using the optimzed parameters.  If \code{estimateLoss = TRUE}
 ##' when \code{glmnetLRC()} was called, the mean and standard deviation of the expected loss are also shown.
-##' In addition, all of this same information is returned invisibly as a matrix.
+##' In addition, all of this same information is returned invisibly as a matrix. Display of the information
+##' can be suppressed by setting \code{verbose = FALSE} in the call to \code{print}.
 ##'
 ##' @param x For the \code{print} and \code{plot} methods:  an object of class \code{glmnetLRC} (returned
 ##' by \code{glmnetLRC()}), which contains the optimally-trained elastic-net logistic regression classifier.
 ##'
 ##' @export
 
-print.glmnetLRC <- function(x, ...) {
+print.glmnetLRC <- function(x, verbose = TRUE, ...) {
 
   # Find the index of the optimal lambda in the glmnet object
   indexMatch <- order(abs(x$lambda -
@@ -564,8 +568,10 @@ print.glmnetLRC <- function(x, ...) {
   }
 
   # Print the optimal parms
-  cat("The optimal parameter values for the elastic-net logistic regression fit: \n")
-  print(op)
+  if (verbose) {
+    cat("The optimal parameter values for the elastic-net logistic regression fit: \n")
+    print(op)
+  }
 
   # Invisibly return the optimal parms matrix
   invisible(op)
@@ -587,15 +593,15 @@ plot.glmnetLRC <- function(x, ...){
   ## put histograms on the diagonal
   panelHistogram <- function(x, ...) {
 
-      usr <- par("usr")
-      on.exit(par(usr))
-      par(usr = c(usr[1:2], 0, 1.5) )
-      h <- hist(x, plot = FALSE)
-      breaks <- h$breaks
-      nB <- length(breaks)
-      y <- h$counts
-      y <- y / max(y)
-      rect(breaks[-nB], 0, breaks[-1], y, col = "cyan", ...)
+    usr <- par("usr")
+    on.exit(par(usr))
+    par(usr = c(usr[1:2], 0, 1.5) )
+    h <- hist(x, plot = FALSE)
+    breaks <- h$breaks
+    nB <- length(breaks)
+    y <- h$counts
+    y <- y / max(y)
+    rect(breaks[-nB], 0, breaks[-1], y, col = "cyan", ...)
 
   }
 

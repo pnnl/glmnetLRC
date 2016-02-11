@@ -1,4 +1,4 @@
-context("Verify calcLoss() and summary() perform correctly")
+context("Verify generateTestSets() performs correctly")
 
 # Create a vector of labels, simulating instances
 tClass <- factor(rep(letters[1:3], each = 5))
@@ -43,7 +43,7 @@ test_that("Cannot have more than 2 levels for stratified", {
 })
 
 
-test_that("Check for each training set having at least one observation from each level is working," {
+test_that("Check for each training set having at least one observation from each level is working", {
 
    ntClass <- factor(rep(letters[1:2], each = 3))    
 
@@ -73,5 +73,5 @@ test_that("Checking L.O.O. allocation", {
   expect_equal(length(unlist(out, recursive = FALSE)), 15)
   expect_true(all(unlist(lapply(unlist(out, recursive = FALSE), length)) == 1))
     
-}
+})
 
