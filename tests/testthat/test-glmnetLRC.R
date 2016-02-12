@@ -1,15 +1,5 @@
 context("Verify glmnetLRC() and associated methods perform correctly")
 
-# Load the glmmnet library
-if (!require(glmnet)) {
-  stop("The 'glmnet' package must be installed for this test")
-}
-
-# Load the Smisc namespace
-if (!requireNamespace("Smisc")) {
-  stop("The 'Smisc' namespace must be available for this test")
-}
-
 # Set the seed
 set.seed(20)
     
@@ -65,7 +55,7 @@ test_that("Final glmnet model matches manual fitting", {
   lambdaVec <- gfit$lambda
 
   # Fit the glmnet
-  gfit1 <- glmnet(preds, response, family = "binomial", alpha = alpha, lambda = lambdaVec, standardize = FALSE)
+  gfit1 <- glmnet::glmnet(preds, response, family = "binomial", alpha = alpha, lambda = lambdaVec, standardize = FALSE)
 
   # Get the coefs with the optimal lambda
   c1 <- coef(gfit)
@@ -99,6 +89,7 @@ test_that("Final glmnet model matches manual fitting", {
 
   # Tests
   expect_equal(c1, c2)
+  expect_that(c1, not(equals(c3)))  
   expect_true(max(abs(c3 - c1)) < 0.001)
 
 })
@@ -117,8 +108,8 @@ test_that("Testing intercept only model with manual fitting", {
   lambdaVec <- gfit$lambda
 
   # Fit the glmnet
-  gfit1 <- glmnet(preds, response, family = "binomial", alpha = alpha, lambda = lambdaVec,
-                  standardize = FALSE, intercept = FALSE)
+  gfit1 <- glmnet::glmnet(preds, response, family = "binomial", alpha = alpha, lambda = lambdaVec,
+                          standardize = FALSE, intercept = FALSE)
 
   # Get the coefs with the optimal lambda
   c1 <- coef(gfit)
@@ -155,13 +146,14 @@ test_that("Testing intercept only model with manual fitting", {
 
   # Tests
   expect_equal(c1, c2)
+  expect_that(c1, not(equals(c3)))
   expect_true(max(abs(c3 - c1)) < 0.001)
 
 })
 
 test_that("Errors for argument checking are working as expected", {
 
-  expect_error(glmnetLRC(rep(1,2,each=20), preds, alphaVec = alpha, tauVec = 0.5, cvFolds = 3,
+  expect_error(glmnetLRC(rep(1, 2,each = 20), preds, alphaVec = alpha, tauVec = 0.5, cvFolds = 3,
                          cvReps = 1.5, standardize = FALSE, estimateLoss = TRUE),
                "'truthLabels' must be a factor")
     
@@ -175,7 +167,19 @@ test_that("Errors for argument checking are working as expected", {
   
   expect_error(glmnetLRC(response, preds, alphaVec = alpha, tauVec = 0.5, cvFolds = 3,
                          cvReps = 2, standardize = FALSE, family = "poisson", estimateLoss = TRUE),
-               "are controlled and should not be supplied")
+               "and should not be supplied to")
+
+  expect_error(glmnetLRC(response, preds, lossMat = 7, alphaVec = alpha,
+                         tauVec = 0.5, cvFolds = 3, cvReps = 2),
+               "'lossMat' must be either '0-1' or an object of class 'lossMat'")
+
+  expect_error(glmnetLRC(response, preds, lossMat = c("a", "b"), alphaVec = alpha,
+                         tauVec = 0.5, cvFolds = 3, cvReps = 2),
+               "'lossMat' must be either '0-1' or an object of class 'lossMat'")
+  
+  expect_error(glmnetLRC(response, preds, lossMat = "1-0", alphaVec = alpha,
+                         tauVec = 0.5, cvFolds = 3, cvReps = 2),
+               "'lossMat' must be either '0-1' or an object of class 'lossMat'")
 
 })
 
@@ -326,3 +330,41 @@ test_that("Test the behavior of the predict method", {
   
 })
 
+test_that("Loss weights perform as expected", {
+
+  # Refit with larger weights
+  gp <- glmnetLRC(response, predictors, alphaVec = c(0.8, 1),
+                  tauVec = c(0.4, 0.5, 0.6), cvReps = 2,
+                  lossMat = lM, lossWeight = rep(7, length(response)),
+                  nJobs = 2, masterSeed = 6,
+                  estimateLoss = TRUE)
+
+  gp.c <- Smisc::loadObject("../datasets/gp.Rdata")
+
+  expect_equal(gp, gp.c)
+
+  # Refit with different weights
+  gp1 <- glmnetLRC(response, predictors, alphaVec = c(0.8, 1),
+                   tauVec = c(0.4, 0.5, 0.6), cvReps = 2,
+                   lossMat = lM,
+                   lossWeight = rpois(length(response), lambda = 10),
+                   nJobs = 2, masterSeed = 6,
+                   estimateLoss = TRUE)
+
+  expect_that(gp1, not(equals(gp.c)))
+    
+})
+
+test_that("Seeds make a difference", {
+
+  # Refit with different seed
+  gp <- glmnetLRC(response, predictors, alphaVec = c(0.8, 1),
+                  tauVec = c(0.4, 0.5, 0.6), cvReps = 2,
+                  lossMat = lM, nJobs = 2, masterSeed = 6 + 20,
+                  estimateLoss = TRUE)
+
+  gp.c <- Smisc::loadObject("../datasets/gp.Rdata")
+
+  expect_that(gp, not(equals(gp.c)))
+    
+})

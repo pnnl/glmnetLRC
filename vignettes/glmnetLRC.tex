@@ -13,6 +13,7 @@
 \usepackage{here}
 \usepackage{zi4}
 \usepackage{color}
+% I put Sweave.sty at ~/Library/texmf/tex/latex/Sweave/Sweave.sty, per the TeXShop instructions
 \usepackage{Sweave}
 
 \DeclareMathOperator*{\argmin}{arg\,min}
@@ -136,8 +137,8 @@ classifier.  We now train the elastic-net logistic regression using restricted v
 {\tt alphaVec} and a small number of cross validation replicates, {\tt cvReps}.
 \begin{Schunk}
 \begin{Sinput}
-> # Set the number of cores to be one less than the total available
-> ncores <- max(1, parallel::detectCores() - 1)
+> # Set the number of cores to be two less than the number available
+> ncores <- max(1, parallel::detectCores() - 2)
 > # Fit the LRC model with 2 cross validation replicates per core
 > lrc_fit <- glmnetLRC(response, predictors, lM, nJobs = ncores,
 +                      cvFolds = 5, cvReps = 2 * ncores,
@@ -160,7 +161,7 @@ cross validation replicate.
 \begin{Soutput}
 The optimal parameter values for the elastic-net logistic regression fit: 
      Df      %Dev alpha     lambda tau mean.ExpectedLoss sd.ExpectedLoss
-[1,]  8 0.6784573     1 0.02983395 0.3         0.1805128      0.01240983
+[1,] 11 0.7104052     1 0.02053741 0.3         0.1753846      0.01095085
 \end{Soutput}
 \end{Schunk}
 
@@ -172,10 +173,12 @@ the call to the {\tt print()} method above):
 > coef(lrc_fit)
 \end{Sinput}
 \begin{Soutput}
-   (Intercept)   XIC_WideFrac  XIC_Height_Q3     MS1_TIC_Q4      MS2_Count 
-  6.736524e+00  -1.833107e+01   1.168220e+00   2.556815e-02  -3.431711e-05 
-MS2_Density_Q1           C_4A         MS2_4A           P_2B 
- -6.389503e-04   4.202109e-02  -2.422953e-01  -6.532740e-04 
+   (Intercept)   XIC_WideFrac  XIC_Height_Q3     MS1_TIC_Q3     MS1_TIC_Q4 
+  7.624509e+00  -2.233079e+01   1.572170e+00   6.362096e-03   1.294175e-01 
+     MS2_Count MS2_Density_Q1           C_4A          IS_1A         MS1_2A 
+ -4.960917e-05  -1.090757e-03   5.770737e-02   4.458346e-03   2.651479e-04 
+        MS2_4A           P_2B 
+ -3.788410e-01  -6.577216e-04 
 \end{Soutput}
 \end{Schunk}
 
@@ -221,11 +224,11 @@ level in {\tt response}.
 \end{Sinput}
 \begin{Soutput}
                           poor
-sensitivity         0.91919192
+sensitivity         0.92929293
 specificity         0.93805310
-false negative rate 0.08080808
+false negative rate 0.07070707
 false positive rate 0.06194690
-accuracy            0.93230769
+accuracy            0.93538462
 \end{Soutput}
 \end{Schunk}
 \noindent Now let's bring in some new data and examine the performance of the classifier:
@@ -262,10 +265,10 @@ good poor
 \end{Sinput}
 \begin{Soutput}
                           poor
-sensitivity         0.90163934
-specificity         0.89473684
-false negative rate 0.09836066
-false positive rate 0.10526316
+sensitivity         0.88524590
+specificity         0.92105263
+false negative rate 0.11475410
+false positive rate 0.07894737
 accuracy            0.89898990
 \end{Soutput}
 \end{Schunk}
@@ -277,8 +280,8 @@ counts the number of observations classified to each category:
 \end{Sinput}
 \begin{Soutput}
  PredictClass
- good:40     
- poor:59     
+ good:42     
+ poor:57     
 \end{Soutput}
 \end{Schunk}
 

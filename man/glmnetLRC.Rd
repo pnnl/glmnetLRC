@@ -171,7 +171,7 @@ partition of the data is created using its own seed, resulting in another
 The final elastic-net logistic regression classfier is given by fitting the regression
 coefficients to all the training data using the optimal \eqn{(\alpha,\lambda,\tau)}.
 
-The methodology is discussed in detail in the Appendix of the package vignette.
+The methodology is discussed in detail in the package vignette.
 }
 \section{Methods (by generic)}{
 \itemize{
@@ -278,6 +278,10 @@ Venzin AM, Smith RD, Sego LH, Tardiff MF, Payne SH. 2014.
 Signatures for Mass Spectrometry Data Quality.
 Journal of Proteome Research. 13(4), 2215-2222.
 \url{http://pubs.acs.org/doi/abs/10.1021/pr401143e}
+
+Friedman J, Hastie T, Tibshirani R. 2010. Regularization Paths for Generalized
+Linear Models via Coordinate Descent. Journal of Statistical Software.
+33(1), 1-22.
 }
 \seealso{
 \code{\link{summary.LRCpred}}, a summary method for objects of class

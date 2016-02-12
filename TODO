@@ -1,6 +1,6 @@
 * Recreate the glmnetLRC object that takes a long time to run
-* Include a test using the lossWeight argument.  What happens if you feed glmnetLRC missing data?
-* Test tests
+* CRAN checks (one last time with internet)
 * After testing, Remove commented code in single_LRCglmnet.R and other files
-* CRAN checks
+* add Travis build github testing stuff
+* Submit ERICA for vignette
 * push to github

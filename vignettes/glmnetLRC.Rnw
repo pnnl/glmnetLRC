@@ -13,6 +13,7 @@
 \usepackage{here}
 \usepackage{zi4}
 \usepackage{color}
+% I put Sweave.sty at ~/Library/texmf/tex/latex/Sweave/Sweave.sty, per the TeXShop instructions
 \usepackage{Sweave}
 
 \DeclareMathOperator*{\argmin}{arg\,min}
@@ -113,8 +114,8 @@ increased computation time, but more of the parameter space will be sampled, pot
 classifier.  We now train the elastic-net logistic regression using restricted values of {\tt tauVec} and 
 {\tt alphaVec} and a small number of cross validation replicates, {\tt cvReps}.
 <<train>>=
-# Set the number of cores to be one less than the total available
-ncores <- max(1, parallel::detectCores() - 1)
+# Set the number of cores to be two less than the number available
+ncores <- max(1, parallel::detectCores() - 2)
 
 # Fit the LRC model with 2 cross validation replicates per core
 lrc_fit <- glmnetLRC(response, predictors, lM, nJobs = ncores,

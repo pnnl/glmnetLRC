@@ -141,6 +141,10 @@
 ##' Journal of Proteome Research. 13(4), 2215-2222.
 ##' \url{http://pubs.acs.org/doi/abs/10.1021/pr401143e}
 ##'
+##' Friedman J, Hastie T, Tibshirani R. 2010. Regularization Paths for Generalized
+##' Linear Models via Coordinate Descent. Journal of Statistical Software.
+##' 33(1), 1-22.
+##'
 ##' @seealso \code{\link{summary.LRCpred}}, a summary method for objects of class
 ##' \code{LRCpred}, produced by the \code{predict} method.
 ##'
@@ -228,6 +232,10 @@ glmnetLRC <- function(truthLabels, predictors,
                       verbose = FALSE,
                       ...) {
 
+  # Force the evaluation of the weight object immediately--this is IMPORTANT
+  # because of R's lazy evaluation
+  force(lossWeight)
+
   # Check argument types
   Smisc::stopifnotMsg(
     is.factor(truthLabels), "'truthLabels' must be a factor",
@@ -247,7 +255,9 @@ glmnetLRC <- function(truthLabels, predictors,
   # Further checks of argument values
   Smisc::stopifnotMsg(
     length(levels(truthLabels)) == 2, "'truthLabels' must have 2 levels",
+    all(complete.cases(truthLabels)), "'truthLabels' cannot contain missing values",
     NCOL(predictors) > 1, "'predictors' must have at least 2 columns",
+    all(complete.cases(predictors)),  "'predictors' cannot contain missing values", 
     length(truthLabels) == NROW(predictors), "the length of 'truthLabels' must match the number of rows in 'predictors'",
     length(lossWeight) == NROW(predictors), "the length of 'lossWeight' must match the number of rows in 'predictors'",
     all(lossWeight >= 0), "All values of 'lossWeight' must be non-negative",
@@ -279,7 +289,6 @@ glmnetLRC <- function(truthLabels, predictors,
         lossMat <- lossMatrix(rep(levels(truthLabels), each = 2),
                               rep(levels(truthLabels), 2),
                               c(0, 1, 1, 0))
-
         lmGood <- TRUE
 
       }
@@ -292,15 +301,6 @@ glmnetLRC <- function(truthLabels, predictors,
     stop("'lossMat' must be either '0-1' or an object of class 'lossMat' returned by 'lossMatrix()'")
   }
 
-  
-  # Check for missing data
-  if (!all(complete.cases(truthLabels))) {
-    warning("'truthLabels' contains missing values which may upset 'glmnet::glmnet()'")
-  }  
-  if (!all(complete.cases(predictors))) {
-    warning("'predictors' contains missing values which may upset 'glmnet::glmnet()'")
-  }
-  
   
   # Gather arguments for glmnet
   glmnetArgs <- list(...)
@@ -336,10 +336,6 @@ glmnetLRC <- function(truthLabels, predictors,
   glmnetArgs <- c(list(x = predictors, y = truthLabels, family = "binomial"), glmnetArgs)
   class(glmnetArgs) <- c("glmnetArgs", class(glmnetArgs))
                        
-  # Force the evaluation of the weight object immediately--this is IMPORTANT
-  # because of R's lazy evaluation
-  force(lossWeight)
-
   ################################################################################
   # Data preparation
   ################################################################################
@@ -407,7 +403,7 @@ glmnetLRC <- function(truthLabels, predictors,
                             alphaVec = alphaVec,
                             tauVec = tauVec,
                             njobs = nJobs,
-                            expr = expression(library(lrc)),
+                            expr = expression(library(glmnetLRC)),
                             varlist = neededObjects)
 
     # Collapse results to a data frame
@@ -488,7 +484,7 @@ glmnetLRC <- function(truthLabels, predictors,
                               tauVec = finalParmEstimates[["tau"]],
                               lambdaVec = lambdaVec,
                               lambdaVal = finalParmEstimates[["lambda"]],
-                              expr = expression(library(lrc)),
+                              expr = expression(library(glmnetLRC)),
                               varlist = neededObjects,
                               njobs = nJobs)
 
@@ -794,12 +790,6 @@ predict.glmnetLRC <- function(object,
 } # predict.glmnetLRC
 
 
-# The generic extract method
-##' @export
-extract <- function (object, ...) {
-  UseMethod("extract", object)
-}
-
 ##' @method extract glmnetLRC
 ##'
 ##' @describeIn glmnetLRC Extracts the \code{glmnet} object that was fit using the optimal parameter estimates of
@@ -813,7 +803,7 @@ extract.glmnetLRC <- function(object, ...) {
   # Remove the lossMat, parms, optimalParms, and lossEstimates elements of the object.
   out <- object[-which(names(object) %in% c("lossMat", "parms", "optimalParms", "lossEstimates"))]
 
-  # Remove it's LRGglmnet class.
+  # Remove it's LRCglmnet class.
   class(out) <- class(object)[-which(class(object) == "glmnetLRC")]
 
   return(out)
