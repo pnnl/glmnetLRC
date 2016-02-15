@@ -218,11 +218,9 @@
 
 glmnetLRC <- function(truthLabels, predictors,
                       lossMat = "0-1",
-#                      weight = rep(1, NROW(predictors)),
                       lossWeight = rep(1, NROW(predictors)),
                       alphaVec = seq(0, 1, by = 0.2),
                       tauVec = seq(0.1, 0.9, by = 0.05),
-#                      intercept = TRUE,
                       cvFolds = 5,
                       cvReps = 100,
                       stratify = FALSE,
@@ -340,9 +338,6 @@ glmnetLRC <- function(truthLabels, predictors,
   # Data preparation
   ################################################################################
 
-  # Get the data and filter missing values as neccessary
-#  d <- dataPrep(truthLabels, predictors, weight, naFilter, verbose)
-
   # number of observations after filtering for NAs
   n <- length(truthLabels)
 
@@ -360,13 +355,10 @@ glmnetLRC <- function(truthLabels, predictors,
                            lambdaVec = NULL) {
 
     single_glmnetLRC(glmnetArgs,
-#                     d$truthLabels,
-#                     d$predictors,
                      lossMat,
                      lossWeight,
                      alphaVec,
                      tauVec,
-#                     intercept,
                      cvFolds,
                      testFolds,
                      n,
@@ -389,14 +381,11 @@ glmnetLRC <- function(truthLabels, predictors,
 
     # Names of objects that will be needed in the cluster
     neededObjects <- c("glmnetArgs",
-#                       "alphaVec",
-#                       "tauVec",
                        "lossMat",
                        "lossWeight",
                        "cvFolds",
                        "n",
                        "verbose")
-
 
     # Execute the training in parallel
     pe <- Smisc::parLapplyW(testSets, trainWrapper,
@@ -449,11 +438,6 @@ glmnetLRC <- function(truthLabels, predictors,
   # Fit the model using the aggregate parameters
   glmnetFinal <- do.call(glmnet::glmnet,
                          c(glmnetArgs, list(lambda = lambdaVec, alpha = finalParmEstimates[["alpha"]])))
-
-  ## glmnetFinal <- glmnet::glmnet(d$predictors, d$truthLabels, weights = d$weight,
-  ##                               family = "binomial", lambda = lambdaVec,
-  ##                               alpha = finalParmEstimates[["alpha"]],
-  ##                               intercept = intercept)
 
   # Add the loss matrix
   glmnetFinal$lossMat <- lossMat
@@ -647,9 +631,6 @@ coef.glmnetLRC <- function(object, ...) {
     stop("Unexpected error.  The 'object' does not inherit from 'glmnet'")
   }
 
-  # Reset the class so that predicting methods work more easily
-#  class(object) <- setdiff(class(object), "glmnetLRC")
-
   # Verify the optimal lambda is in there (it should be)
   if (!(object$optimalParms[["lambda"]] %in% object$lambda)) {
     stop("Unexpected error.  The optimal value of lambda was not in 'glmnetLRC_ojbect$lambda'")
@@ -701,14 +682,7 @@ predict.glmnetLRC <- function(object,
 
   # Switching from column numbers to column names if necessary
   truthCol <- Smisc::selectElements(truthCol, colnames(newdata))
-  ## if (!is.null(truthCol) & is.numeric(truthCol)) {
-  ##    truthCol <- colnames(newdata)[truthCol]
-  ## }
-
   keepCols <- Smisc::selectElements(keepCols, colnames(newdata))
-  ## if (!is.null(keepCols) & is.numeric(keepCols)) {
-  ##    keepCols <- colnames(newdata)[keepCols]
-  ## }
 
   # Verify the levels of truthCol match the class names in the object
   if (!is.null(truthCol)) {
@@ -741,9 +715,7 @@ predict.glmnetLRC <- function(object,
 
   # Get the original glmnet object
   glmnetObject <- extract(object)
-#  glmnetObject <- object[-which(names(object) == "optimalParms")]
-#  class(glmnetObject) <- setdiff(class(object), "glmnetLRC")
-
+  
   # Get the numeric (probability) predictions using predict methods from glmnet package
   # using the optimal lambda
   preds <- predict(glmnetObject, nd,
