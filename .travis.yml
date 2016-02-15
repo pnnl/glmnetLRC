@@ -1,0 +1,26 @@
+language: r
+sudo: required
+
+env:
+  global:
+    - _R_CHECK_FORCE_SUGGESTS_=FALSE
+
+r_binary_packages:
+  - glmnet
+  - testthat
+  - plyr
+  - roxygen2
+  
+r_github_packages:
+  - pnnl/Smisc
+
+branches:
+  only:
+    - master
+
+notifications:
+  email:
+    recipients:
+    - landon.sego@pnnl.gov
+    on_success: change
+    on_failure: change

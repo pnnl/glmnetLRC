@@ -37,7 +37,7 @@ Type 'q()' to quit R.
 Warning message:
 from glmnet Fortran code (error code -51); Convergence for 51th lambda value not reached after maxit=100000 iterations; solutions for larger lambdas returned 
 > 
-> save(glmnetLRC_fit, file = "../glmnetLRC_fit.RData")
+> save(glmnetLRC_fit, file = "../../data/glmnetLRC_fit.RData")
 > 
 > proc.time()
    user  system elapsed 

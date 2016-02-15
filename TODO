@@ -1,6 +1,5 @@
-* Recreate the glmnetLRC object that takes a long time to run
+* push to github
 * CRAN checks (one last time with internet)
 * After testing, Remove commented code in all R files
-* add Travis build github testing stuff
 * Submit ERICA for vignette
-* push to github
+

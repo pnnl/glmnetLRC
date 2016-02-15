@@ -16,4 +16,4 @@ glmnetLRC_fit <- glmnetLRC(response, predictors, lossMat = lM,
                            estimateLoss = TRUE,
                            nJobs = parallel::detectCores())
 
-save(glmnetLRC_fit, file = "../glmnetLRC_fit.RData")
+save(glmnetLRC_fit, file = "../../data/glmnetLRC_fit.RData")

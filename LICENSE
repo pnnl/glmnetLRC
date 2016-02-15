@@ -29,13 +29,13 @@ citations as a reference:
 
 Sego LH, Venzin AM, Ramey JA. 2016. glmnetLRC:  Lasso and Elastic-Net Logistic 
 Regression Classification (LRC) with an arbitrary loss function in R. Pacific 
-Northwest National Laboratory. http://github.com/pnnl/lrc.
+Northwest National Laboratory. http://github.com/pnnl/glmnetLRC.
 
 Amidan BG, Orton DJ, LaMarche BL, Monroe ME, Moore RJ,
 Venzin AM, Smith RD, Sego LH, Tardiff MF, Payne SH. 2014.
 Signatures for Mass Spectrometry Data Quality.
 Journal of Proteome Research. 13(4), 2215-2222.
-http://pubs.acs.org/doi/abs/10.1021/pr401143e
+http://pubs.acs.org/doi/abs/10.1021/pr401143e.
 
 2.	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 
 "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED 

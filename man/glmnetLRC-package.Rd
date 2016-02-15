@@ -9,7 +9,7 @@ Lasso and elastic-net logistic regression classification (LRC) with an arbitrary
 for the classification error
 }
 \details{
-\pkg{lrc} extends the \pkg{glmnet} package for training elastic-net LRCs with a user-specified
+\pkg{glmnetLRC} extends the \pkg{glmnet} package for training elastic-net LRCs with a user-specified
 discrete loss function used to measure the classification error.  Tuning parameters are selected to
 minimize the expected loss calculated by cross validation.  There are a handful of functions
 you'll need (along with their associated methods): \code{\link{lossMatrix}}, \code{\link{glmnetLRC}}, 
