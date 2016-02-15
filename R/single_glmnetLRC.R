@@ -8,15 +8,12 @@
 # used to more quickly fit the glmnet during training.
 
 single_glmnetLRC <- function(glmnetArgs,
-#                             truthLabels,
-#                             predictors,
                              lossMat,
                              lossWeight,
                              alphaVec,
                              tauVec,
-#                             intercept,
                              cvFolds,
-                             testFolds, # seed
+                             testFolds, 
                              n,
                              verbose,
                              lambdaVal = NULL,
@@ -76,23 +73,11 @@ single_glmnetLRC <- function(glmnetArgs,
     # Train the elastic net regression
     glmnetFit <- do.call(glmnet::glmnet, glmnetArgsTrain)
     
-    ## glmnetFit <- glmnet::glmnet(predictors[trainSet,],
-    ##                             truthLabels[trainSet],
-    ##                             weights = weight[trainSet],
-    ##                             family = "binomial",
-    ##                             lambda = lambdaV,
-    ##                             alpha = a,
-    ##                             intercept = intercept)
-
     # Now test it
     out <- predLoss_glmnetLRC(glmnetFit, glmnetArgs$x[testSet,], glmnetArgs$y[testSet],
                               lossMat, tauVec = tauVec, lossWeight = lossWeight[testSet],
                               lambdaVec = lambdaVal)
     
-    ## out <- predLoss_glmnetLRC(glmnetFit, predictors[testSet,], truthLabels[testSet],
-    ##                           lossMat, tauVec = tauVec, lossWeight = lossWeight[testSet],
-    ##                           lambdaVec = lambdaVal)
-
     return(out)
 
   } # trainTest
@@ -112,9 +97,6 @@ single_glmnetLRC <- function(glmnetArgs,
 
       lambdaVec <- do.call(glmnet::glmnet, c(glmnetArgs, list(alpha = alpha)))$lambda
     
-      ## lambdaVec <- glmnet::glmnet(predictors, truthLabels, weights = weight,
-      ##                             family = "binomial", alpha = alpha,
-      ##                             intercept = intercept)$lambda    
     }
 
     # Now train/test over all the cv folds
@@ -126,9 +108,6 @@ single_glmnetLRC <- function(glmnetArgs,
     return(testAll)
 
   } # cvForAlpha
-
-  # Generate the test folds
-#  testFolds <- Smisc::parseJob(n, cvFolds, random.seed = seed)
 
   # Test/train over the vector of alphas
   completeTest <- Smisc::list2df(lapply(alphaVec, function(x) cvForAlpha(x, testFolds)))
@@ -164,11 +143,7 @@ single_glmnetLRC <- function(glmnetArgs,
   dfData$sqErrorTau <- (dfData$tau - 0.5)^2
   gridMinimum <- Smisc::sortDF(dfData, ~ ExpectedLoss + sqErrorTau - lambda)[1,]
 
-  # Add in the seed
-#  gridMinimum$seed <- seed
-
   # Return the optimal lambda, tau, and alpha for this particular seed
-#  return(gridMinimum[,c("seed", "alpha", "lambda", "tau", "ExpectedLoss")])
   return(gridMinimum[,c("alpha", "lambda", "tau", "ExpectedLoss")])
 
 } # single_glmnetLRC
