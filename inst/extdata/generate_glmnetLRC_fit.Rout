@@ -17,6 +17,10 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 'help.start()' for an HTML browser interface to help.
 Type 'q()' to quit R.
 
+> ## This code generates the 'glmnetLRC_fit' object stored in
+> ## 'PACKAGE_DIR/data/glmnetLRC_fit.RData' and used in the
+> ## glmnetLRC() example.
+>
 > library(glmnetLRC)
 > 
 > data(traindata)

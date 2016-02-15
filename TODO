@@ -1,5 +1,3 @@
-* push to github
-* CRAN checks (one last time with internet)
-* After testing, Remove commented code in all R files
-* Submit ERICA for vignette
+* After testing, Remove commented code in all R files and re-run checks
+
 
