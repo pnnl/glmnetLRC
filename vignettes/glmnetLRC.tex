@@ -129,7 +129,7 @@ $\alpha \in [0, 1]$; {\tt cvFolds}, the number of cross validation folds; {\tt c
 the cross validation process is repeated with a different random partition of the data, and {\tt masterSeed}, which controls 
 the partitioning of the data into the cross validation folds. Keep in mind that $\alpha$ governs the tradeoff between 
 the two regularization penalties. When $\alpha = 0$, $L_2$ regularization (the ridge penalty) is used,
-and when $\alpha = 1$, $L_1$ regularization (the lasso penality) is used.
+and when $\alpha = 1$, $L_1$ regularization (the lasso penalty) is used.
 
 Heavier sampling of {\tt tauVec} or {\tt alphaVec} (i.e., sequences of greater length) leads to 
 increased computation time, but more of the parameter space will be sampled, potentially leading to a better 
@@ -193,7 +193,7 @@ these true class labels can be specified via the
 {\tt truthCol} argument. Additionally, one may wish to carry through a subset of the explanatory variables in 
 {\tt newdata}.  These columns are indicated using {\tt keepCols}.   True labels are not required to make 
 predictions---but they are required to compute performance metrics (sensitivity, specificity, etc.) for the 
-elastic-net logistic regression model. We begin by testing the classifer on the original training data:
+elastic-net logistic regression model. We begin by testing the classifier on the original training data:
 \begin{Schunk}
 \begin{Sinput}
 > # Predict the training data
@@ -219,7 +219,7 @@ dataset to be ``good'' when it is ``poor.''  This orientation resulted from us s
 level in {\tt response}.
 \begin{Schunk}
 \begin{Sinput}
-> # Summarize the peformance of the new classifier in terms of a variety of metrics:
+> # Summarize the performance of the new classifier in terms of a variety of metrics:
 > summary(predictTrain)
 \end{Sinput}
 \begin{Soutput}
@@ -332,7 +332,7 @@ $\boldsymbol{\beta} = (\beta_0, \beta_1, \ldots \beta_p)^T$.
 The estimate of the vector of regression parameters, $\boldsymbol{\beta}$, is influenced by two other tuning parameters, 
 $\alpha$ and $\lambda$.  For this reason, we will often write $\boldsymbol\beta$ as $\boldsymbol\beta(\alpha,\lambda)$.  
 The value of $\lambda > 0$ controls the weight of the
-penalty of the log-likelihoood function, while $\alpha$ controls the mixture of the ridge and lasso penalties.  
+penalty of the log-likelihood function, while $\alpha$ controls the mixture of the ridge and lasso penalties.  
 The relationship between $\boldsymbol{\beta}$, $\alpha$, and $\lambda$ will be clarified below.  A final tuning parameter, 
 $\tau \in (0, 1)$, provides a threshold for the LRC such that if $\pi_i > \tau$, observation $i$ is predicted to belong
 to class ``1''.
