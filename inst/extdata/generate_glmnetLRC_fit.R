@@ -1,3 +1,7 @@
+## This code generates the 'glmnetLRC_fit' object stored in
+## 'PACKAGE_DIR/data/glmnetLRC_fit.RData' and used in the
+## glmnetLRC() example.
+
 library(glmnetLRC)
 
 data(traindata)
