@@ -14,6 +14,13 @@ discrete loss function used to measure the classification error.  Tuning paramet
 minimize the expected loss calculated by cross validation.  There are a handful of functions
 you'll need (along with their associated methods): \code{\link{lossMatrix}}, \code{\link{glmnetLRC}}, 
 and \code{\link{predict.glmnetLRC}}
+
+\tabular{ll}{
+Package: \tab glmnetLRC\cr
+Type: \tab Package\cr
+Version: \tab 0.1.0\cr
+Date: \tab 2016-02-15\cr
+License: \tab file LICENSE\cr }
 }
 \author{
 Landon Sego, Alex Venzin, John Ramey
