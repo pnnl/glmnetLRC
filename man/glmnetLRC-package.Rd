@@ -18,8 +18,8 @@ and \code{\link{predict.glmnetLRC}}
 \tabular{ll}{
 Package: \tab glmnetLRC\cr
 Type: \tab Package\cr
-Version: \tab 0.1.0\cr
-Date: \tab 2016-02-15\cr
+Version: \tab 0.1.1\cr
+Date: \tab 2016-03-09\cr
 License: \tab file LICENSE\cr }
 }
 \author{
