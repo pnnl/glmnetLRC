@@ -257,7 +257,7 @@ that maximizes the penalized, binomial log-likelihood function:
 \begin{align}
 \label{eq:penalized_likelihood}
 \hat{\boldsymbol{\beta}}(\alpha,\lambda) = \argmax_{\boldsymbol\beta \in \mathbb{R}^{p+1}} \Biggl[ \ell(\mathbf{x}_i,\boldsymbol{\beta}) - \lambda 
-\biggl( \frac{1-\alpha}{2} \sum_{i=1}^p \beta_i^2 + \alpha \sum_{i=1}^p |\beta_i| \biggr) \Biggr]
+\biggl( \frac{1-\alpha}{2} \sum_{k=1}^p \beta_k^2 + \alpha \sum_{k=1}^p |\beta_k| \biggr) \Biggr]
 \end{align}
 \noindent where the unpenalized log-likelihood is given by
 \begin{align}
