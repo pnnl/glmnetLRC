@@ -1,3 +1,6 @@
-### Web-page docs for `glmnetLRC`
+### Redirect to online docs for `glmnetLRC`
 
-The `gh-pages` branch for `glmnetLRC` contains the [vignette](http://pnnl.github.io/glmnetLRC) of the `glmnetLRC` package
+[index.html](https://github.com/pnnl/glmnetLRC/blob/gh-pages/index.html) redirects to [https://pnnl.github.io/docs-glmnetLRC](https://pnnl.github.io/docs-glmnetLRC). 
+
+
+
