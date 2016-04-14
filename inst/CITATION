@@ -6,9 +6,9 @@ citEntry(entry = "Manual",
   organization = "{Pacific Northwest National Laboratory}",
   address      = "Richland, WA",
   year         = "2016",
-  url          = "http://github.com/pnnl/glmnetLRC",
+  url          = "http://pnnl.github.io/glmnetLRC",
 
   textVersion  =
   paste("Sego LH, Venzin AM, Ramey JA. 2016. glmnetLRC: Lasso and Elastic Net Logistic Regression Classification (LRC) with",
-        "an Arbitrary Loss Function in R. Pacific Northwest National Laboratory. http://github.com/pnnl/glmnetLRC.")
+        "an Arbitrary Loss Function in R. Pacific Northwest National Laboratory. http://pnnl.github.io/glmnetLRC.")
 )

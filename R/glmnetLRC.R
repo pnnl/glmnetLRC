@@ -1,7 +1,7 @@
-##' Lasso and elastic-net logistic regression classifier (LRC) with arbitrary loss function
+##' Construct a lasso or elastic-net logistic regression classifier (LRC) with an arbitrary loss function
 ##'
 ##' This function extends the \code{\link{glmnet}} and \code{\link{cv.glmnet}}
-##' functions from the \pkg{glmnet}
+##' functions from the \href{http://cran.r-project.org/package=glmnet}{glmnet}
 ##' package. It uses cross validation to identify optimal elastic-net parameters and a
 ##' threshold parameter for binary classification, where optimality is defined
 ##' by minimizing an arbitrary, user-specified discrete loss function.
@@ -23,10 +23,8 @@
 ##' \code{glmnetLRC()} searches for the optimal values of \eqn{\alpha} and \eqn{\tau} by
 ##' fitting the elastic-net model at the points of the two-dimensional grid defined by
 ##' \code{alphaVec} and \code{tauVec}.  For each value of \eqn{\alpha}, the vector of
-##' \eqn{\lambda}
-##' values is selected automatically by \code{\link{glmnet}} according to its default
-##' arguments.
-##' The expected loss is calculated for each \eqn{(\alpha,\lambda,\tau)} triple, and the
+##' \eqn{\lambda} values is selected automatically by \code{\link{glmnet}} according to its default
+##' arguments. The expected loss is calculated for each \eqn{(\alpha,\lambda,\tau)} triple, and the
 ##' triple giving rise to the lowest risk designates the optimal model for a given
 ##' cross validation partition, or cross validation replicate, of the data.
 ##'
@@ -37,25 +35,24 @@
 ##' The final elastic-net logistic regression classfier is given by fitting the regression
 ##' coefficients to all the training data using the optimal \eqn{(\alpha,\lambda,\tau)}.
 ##'
-##' The methodology is discussed in detail in the package vignette.
+##' The methodology is discussed in detail in the online
+##' \href{http://pnnl.github.io/docs-glmnetLRC/index.html#mathematical-details}{package documentation}.
 ##'
 ##' @author Landon Sego, Alex Venzin
 ##'
 ##' @rdname glmnetLRC
 ##'
 ##' @export
-##'
 ##' @param truthLabels A factor with two levels containing the true labels for each
-##' observation.
-##' If it is more desirable to correctly predict one of the two classes over the other,
+##' observation. If it is more desirable to correctly predict one of the two classes over the other,
 ##' the second level of this factor should be the class you are most interested in
 ##' predicting correctly.
 ##'
 ##' @param predictors A matrix whose columns are the explanatory regression variables.  Note:
-##' factors are not currently supported.  To include a factor variable with n levels, it must be represented
-##' as n-1 dummy variables in the matrix.
+##' factors are not currently supported.  To include a factor variable with \emph{n} levels, it must be represented
+##' as \emph{n-1} dummy variables in the matrix.
 ##'
-##' @param lossMat Either the character string "0-1", indicating 0-1 loss, or a loss
+##' @param lossMat Either the character string \code{"0-1"}, indicating 0-1 loss, or a loss
 ##' matrix of class \code{lossMat}, produced by \code{\link{lossMatrix}}, that specifies
 ##' the penalties for classification errors.
 ##'
@@ -98,8 +95,8 @@
 ##' takes place at the \code{cvReps} level, i.e., if \code{cvReps = 1}, parallelizing would
 ##' do no good, whereas if \code{cvReps = 2}, each cross validation replicate would be run
 ##' separately in its own thread if \code{nJobs = 2}.
-##' Parallelization is executed using \code{\link{parLapplyW}} from the
-##' \pkg{Smisc} package.
+##' Parallelization is executed using \href{http://pnnl.github.io/docs-Smisc/rd.html#parlapplyw}{parLapplyW()}
+##' from the \href{http://pnnl.github.io/docs-Smisc}{Smisc} package.
 ##'
 ##' @param estimateLoss A logical, set to \code{TRUE} to calculate the average loss estimated via
 ##' cross validation using the optimized parameters \eqn{(\alpha, \lambda, \tau)} to fit the elastic
@@ -112,8 +109,8 @@
 ##' will suppress printing information about the \code{glmnetLRC} object and only invisibly return
 ##' the results.
 ##'
-##' @param \dots For \code{glmnetLRC()}, these are additional arguments to \code{\link{glmnet}} in the \pkg{glmnet} package.
-##' Certain arguments of \code{\link{glmnet}} are reserved by the \pkg{glmnetLRC} package and an error message will make that
+##' @param \dots For \code{glmnetLRC()}, these are additional arguments to \code{\link{glmnet}} in the \code{glmnet} package.
+##' Certain arguments of \code{\link{glmnet}} are reserved by the \code{glmnetLRC} package and an error message will make that
 ##' clear if they are used.  In particular, arguments that control the behavior of \eqn{\alpha} and \eqn{\lambda} are reserved.
 ##' For the \code{plot} method, the "\dots" are additional arguments to the default S3 method \code{\link{pairs}}.  And for
 ##' the \code{print}, \code{coef}, \code{predict}, and \code{extract} methods, the "\dots" are ignored.
@@ -615,7 +612,7 @@ plot.glmnetLRC <- function(x, ...){
 
 ##' @method coef glmnetLRC
 ##'
-##' @describeIn glmnetLRC Calls the \code{\link{predict}} method in \pkg{glmnet}
+##' @describeIn glmnetLRC Calls the \code{predict} method in \code{glmnet}
 ##' on the fitted glmnet object and returns a named vector of the non-zero elastic-net logistic
 ##' regression coefficients using the optimal values of \eqn{\alpha} and \eqn{\lambda}.
 ##'
@@ -766,7 +763,7 @@ predict.glmnetLRC <- function(object,
 ##'
 ##' @describeIn glmnetLRC Extracts the \code{glmnet} object that was fit using the optimal parameter estimates of
 ##' \eqn{(\alpha, \lambda)}.  Returns an object of class \code{"lognet" "glmnet"} that can be passed to various
-##' methods available in the \pkg{glmnet} package.
+##' methods available in the \code{glmnet} package.
 ##'
 ##' @export
 
