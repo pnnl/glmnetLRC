@@ -7,7 +7,7 @@
 ##' 
 ##' @method summary LRCpred
 ##'
-##' @param object an object of class \code{LRC_pred} returned by
+##' @param object an object of class \code{LRCpred} returned by
 ##' \code{\link{predict.glmnetLRC}}.
 ##'
 ##' @param \dots Ignored

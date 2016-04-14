@@ -1,3 +1,12 @@
+Version 0.1.2, 2016-04-13
+-----------------------------------------------------------------------------------
+
+FEATURES / CHANGES
+
+- Package vignette moved to [online docs](http://pnnl.github.io/docs-glmnetLRC)
+- Minor documentation edits
+
+
 Version 0.1.1, 2016-03-09
 -----------------------------------------------------------------------------------
 

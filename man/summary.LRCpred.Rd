@@ -7,7 +7,7 @@
 \method{summary}{LRCpred}(object, ...)
 }
 \arguments{
-\item{object}{an object of class \code{LRC_pred} returned by
+\item{object}{an object of class \code{LRCpred} returned by
 \code{\link{predict.glmnetLRC}}.}
 
 \item{\dots}{Ignored}
