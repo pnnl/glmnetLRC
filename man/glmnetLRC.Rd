@@ -4,6 +4,7 @@
 \alias{coef.glmnetLRC}
 \alias{extract.glmnetLRC}
 \alias{glmnetLRC}
+\alias{missingpreds.glmnetLRC}
 \alias{plot.glmnetLRC}
 \alias{predict.glmnetLRC}
 \alias{print.glmnetLRC}
@@ -22,6 +23,8 @@ glmnetLRC(truthLabels, predictors, lossMat = "0-1", lossWeight = rep(1,
 
 \method{predict}{glmnetLRC}(object, newdata, truthCol = NULL,
   keepCols = NULL, ...)
+
+\method{missingpreds}{glmnetLRC}(object, newdata, ...)
 
 \method{extract}{glmnetLRC}(object, ...)
 }
@@ -101,7 +104,7 @@ which contains the optimally-trained elastic-net logistic regression classifier.
 
 \item{newdata}{A dataframe or matrix containing the new set of observations to
 be predicted, as well as an optional column of true labels.
-\code{newdata} must contain all of the column names that were used
+\code{newdata} should contain all of the column names that were used
 to fit the elastic-net logistic regression classifier.}
 
 \item{truthCol}{The column number or column name in \code{newdata} that contains the
@@ -114,7 +117,7 @@ column names) that will be 'kept' and returned with the predictions. Optional.}
 Certain arguments of \code{\link{glmnet}} are reserved by the \code{glmnetLRC} package and an error message will make that
 clear if they are used.  In particular, arguments that control the behavior of \eqn{\alpha} and \eqn{\lambda} are reserved.
 For the \code{plot} method, the "\dots" are additional arguments to the default S3 method \code{\link{pairs}}.  And for
-the \code{print}, \code{coef}, \code{predict}, and \code{extract} methods, the "\dots" are ignored.}
+the \code{print}, \code{coef}, \code{predict}, \code{missingpreds}, and \code{extract} methods, the "\dots" are ignored.}
 }
 \value{
 An object of class \code{glmnetLRC}, which
@@ -194,6 +197,10 @@ regression coefficients using the optimal values of \eqn{\alpha} and \eqn{\lambd
 Returns an object of class \code{LRCpred} (which inherits
 from \code{data.frame}) that contains the predicted class for each observation.  The columns indicated
 by \code{truthCol} and \code{keepCols} are included if they were requested.
+
+\item \code{missingpreds}: Identify the set of predictors in a \code{glmnetLRC} object that are not
+present in \code{newdata}. Returns a character vector of the missing predictor names. If no predictors are missing,
+it returns \code{character(0)}.
 
 \item \code{extract}: Extracts the \code{glmnet} object that was fit using the optimal parameter estimates of
 \eqn{(\alpha, \lambda)}.  Returns an object of class \code{"lognet" "glmnet"} that can be passed to various

@@ -2,6 +2,7 @@
 
 S3method(coef,glmnetLRC)
 S3method(extract,glmnetLRC)
+S3method(missingpreds,glmnetLRC)
 S3method(plot,glmnetLRC)
 S3method(predict,glmnetLRC)
 S3method(print,glmnetLRC)
@@ -10,4 +11,5 @@ S3method(summary,LRCpred)
 export(extract)
 export(glmnetLRC)
 export(lossMatrix)
+export(missingpreds)
 importFrom(glmnet,predict.lognet)

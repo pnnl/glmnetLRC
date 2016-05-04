@@ -113,7 +113,7 @@
 ##' Certain arguments of \code{\link{glmnet}} are reserved by the \code{glmnetLRC} package and an error message will make that
 ##' clear if they are used.  In particular, arguments that control the behavior of \eqn{\alpha} and \eqn{\lambda} are reserved.
 ##' For the \code{plot} method, the "\dots" are additional arguments to the default S3 method \code{\link{pairs}}.  And for
-##' the \code{print}, \code{coef}, \code{predict}, and \code{extract} methods, the "\dots" are ignored.
+##' the \code{print}, \code{coef}, \code{predict}, \code{missingpreds}, and \code{extract} methods, the "\dots" are ignored.
 ##'
 ##' @return
 ##' An object of class \code{glmnetLRC}, which
@@ -252,7 +252,7 @@ glmnetLRC <- function(truthLabels, predictors,
     length(levels(truthLabels)) == 2, "'truthLabels' must have 2 levels",
     all(complete.cases(truthLabels)), "'truthLabels' cannot contain missing values",
     NCOL(predictors) > 1, "'predictors' must have at least 2 columns",
-    all(complete.cases(predictors)),  "'predictors' cannot contain missing values", 
+    all(complete.cases(predictors)),  "'predictors' cannot contain missing values",
     length(truthLabels) == NROW(predictors), "the length of 'truthLabels' must match the number of rows in 'predictors'",
     length(lossWeight) == NROW(predictors), "the length of 'lossWeight' must match the number of rows in 'predictors'",
     all(lossWeight >= 0), "All values of 'lossWeight' must be non-negative",
@@ -271,8 +271,8 @@ glmnetLRC <- function(truthLabels, predictors,
     nJobs >= 1, "'nJobs' must be 1 or greater",
     nJobs %% 1 == 0, "'nJobs' must be an integer",
     length(estimateLoss) == 1, "'estimateLoss' must have length of 1",
-    length(verbose) == 1, "'verbose' must be TRUE or FALSE")      
-     
+    length(verbose) == 1, "'verbose' must be TRUE or FALSE")
+
   # Check the loss matrix
   lmGood <- FALSE
 
@@ -296,13 +296,13 @@ glmnetLRC <- function(truthLabels, predictors,
     stop("'lossMat' must be either '0-1' or an object of class 'lossMat' returned by 'lossMatrix()'")
   }
 
-  
+
   # Gather arguments for glmnet
   glmnetArgs <- list(...)
 
   # Check the glmnet arguments
   if (length(glmnetArgs)) {
-      
+
     # Get the names of the args provided by the user
     userArgs <- names(glmnetArgs)
 
@@ -318,19 +318,19 @@ glmnetLRC <- function(truthLabels, predictors,
 
     # Get the name of the glmnet args
     defaultArgs <- names(formals(glmnet::glmnet))
-    
+
     # Verify that all the glmnent args provided match glmnet
     if (!all(userArgs %in% defaultArgs)) {
       stop("The following do not match the arguments in glmnet::glmnet():\n",
            "'", paste(setdiff(userArgs, defaultArgs), collapse = "', '"), "'\n")
     }
-    
+
   }
 
   # Create the full list of glmnetArgs that doesn't involve the lambda or alpha parameters
   glmnetArgs <- c(list(x = predictors, y = truthLabels, family = "binomial"), glmnetArgs)
   class(glmnetArgs) <- c("glmnetArgs", class(glmnetArgs))
-                       
+
   ################################################################################
   # Data preparation
   ################################################################################
@@ -343,7 +343,7 @@ glmnetLRC <- function(truthLabels, predictors,
     cat(n, "observations are available for fitting the glmnetLRC model\n")
   }
 
-  
+
   # A wrapper function for calling single_glmnetLRC() via Smisc::parLapplyW()
   trainWrapper <- function(testFolds,
                            alphaVec = 1,
@@ -655,7 +655,7 @@ coef.glmnetLRC <- function(object, ...) {
 ##'
 ##' @param newdata A dataframe or matrix containing the new set of observations to
 ##' be predicted, as well as an optional column of true labels.
-##' \code{newdata} must contain all of the column names that were used
+##' \code{newdata} should contain all of the column names that were used
 ##' to fit the elastic-net logistic regression classifier.
 ##'
 ##' @param truthCol The column number or column name in \code{newdata} that contains the
@@ -693,18 +693,19 @@ predict.glmnetLRC <- function(object,
 
   }
 
-  # Get the predictor names expected by the object
-  predictorNames <- object$beta@Dimnames[[1]]
-
   # Make sure all the predictor names are in the newdata
-  if (!all(predictorNames %in% colnames(newdata))) {
-   stop("The following predictors are expected by 'object' but are not\n",
-        "present in 'newdata'\n'",
-        paste(setdiff(predictorNames, colnames(newdata)), collapse = "', '"), "'\n")
+  if (nm <- length(missingpreds(object, newdata))) {
+
+   # Produce the error message
+   stop(if (nm > 1) paste("There are", nm, "predictors that are required by 'object' but",
+                          "are not present in 'newdata'.\n")
+        else paste("There is 1 predictor required by 'object' that is not present in 'newdata'.\n"),
+        "  Use 'missingpreds(object, newdata)' to identify ",
+        if (nm > 1) "them" else "it")
   }
 
   # Prepare newdata for prediction
-  nd <- as.matrix(newdata[,predictorNames])
+  nd <- as.matrix(newdata[, object$beta@Dimnames[[1]]])
 
   if (!is.numeric(nd)) {
     stop("One or more of the predictor columns in 'newdata' is/are not numeric")
@@ -712,7 +713,7 @@ predict.glmnetLRC <- function(object,
 
   # Get the original glmnet object
   glmnetObject <- extract(object)
-  
+
   # Get the numeric (probability) predictions using predict methods from glmnet package
   # using the optimal lambda
   preds <- predict(glmnetObject, nd,
@@ -728,7 +729,7 @@ predict.glmnetLRC <- function(object,
   if (!is.null(rn <- rownames(newdata))) {
     names(predLabels) <- rn
   }
-  
+
   # Combine new data
   output <- cbind(predLabels, newdata[,truthCol], newdata[,keepCols])
   colnames(output) <- c("PredictClass", truthCol, keepCols)
@@ -757,6 +758,23 @@ predict.glmnetLRC <- function(object,
   return(output)
 
 } # predict.glmnetLRC
+
+##' @method missingpreds glmnetLRC
+##'
+##' @describeIn glmnetLRC Identify the set of predictors in a \code{glmnetLRC} object that are not
+##' present in \code{newdata}. Returns a character vector of the missing predictor names. If no predictors are missing,
+##' it returns \code{character(0)}.
+##'
+##' @export
+
+missingpreds.glmnetLRC <- function(object, newdata, ...) {
+
+  # Get the predictor names expected by the object
+  predictorNames <- object$beta@Dimnames[[1]]
+
+  return(setdiff(predictorNames, colnames(newdata)))
+
+} # missingpreds.glmnetLRC
 
 
 ##' @method extract glmnetLRC
