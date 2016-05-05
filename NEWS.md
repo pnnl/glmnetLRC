@@ -1,6 +1,10 @@
 Version 0.1.3, 2016-05-04
 -----------------------------------------------------------------------------------
 
+FIXES
+
+- Corrected the way `predict.glmnetLRC()` handled additional columns specified by `keepCols`
+
 FEATURES / CHANGES
 
 - Added the `missingpreds` methods to easily identify needed predictors that may not be present in new data
