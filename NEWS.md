@@ -1,3 +1,12 @@
+Version 0.1.3, 2016-05-04
+-----------------------------------------------------------------------------------
+
+FEATURES / CHANGES
+
+- Added the `missingpreds` methods to easily identify needed predictors that may not be present in new data
+- Remove uneeded documentation for generic method, `extract`
+
+
 Version 0.1.2, 2016-04-13
 -----------------------------------------------------------------------------------
 
