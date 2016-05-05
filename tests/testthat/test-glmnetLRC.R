@@ -364,7 +364,8 @@ test_that("Test the behavior of the predict method", {
   expect_equal(np1, np2)
 
   # And if we're missing some of the columns in the model
-  expect_error(predict(gp, testdata[,-c(22:30)]), "The following predictors are expected by 'object' but are not")
+  expect_error(predict(gp, testdata[,-c(22:30)]), "predictors that are required by 'object' but", fixed = TRUE)
+  expect_error(predict(gp, testdata[,-24]), "There is 1 predictor required by 'object' that", fixed = TRUE)
 
   # Insert some missing values in testdata.  Notice that if one of the coefficients is 0, is can be missing
   tdata <- testdata
