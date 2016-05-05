@@ -730,9 +730,13 @@ predict.glmnetLRC <- function(object,
     names(predLabels) <- rn
   }
 
-  # Combine new data
-  output <- cbind(predLabels, newdata[,truthCol], newdata[,keepCols])
-  colnames(output) <- c("PredictClass", truthCol, keepCols)
+  # Combine data
+  selCols <- c(truthCol, keepCols)
+  if (is.null(selCols)) {
+    selCols <- 0
+  }
+  output <- cbind(predLabels, Smisc::select(newdata, selCols))
+  colnames(output)[1] <- "PredictClass"
 
   # Assign the class if a truth column was provided
   if (!is.null(truthCol)) {
