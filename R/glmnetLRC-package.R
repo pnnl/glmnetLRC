@@ -17,7 +17,13 @@
 ##' License: \tab file LICENSE\cr }
 ##'
 ##' @author Landon Sego, Alex Venzin, John Ramey
+##' 
 ##' @docType package
+##' 
 ##' @name glmnetLRC-package
+##' 
 ##' @rdname glmnetLRC-package
+##'
+##' @importFrom graphics hist pairs par rect
+##' @importFrom stats complete.cases median predict runif sd
 NULL
