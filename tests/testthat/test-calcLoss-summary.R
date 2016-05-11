@@ -95,7 +95,7 @@ test_that("Counting from summary() remains unchanged from historical result", {
   out <- gsub(" ", "", summary(new1))
 
   # Tests
-  expect_equal(out[1,], "good:35")
-  expect_equal(out[2,], "poor:64")
+  expect_equal(out[1, 2], "good:35")
+  expect_equal(out[2, 2], "poor:64")
     
 })
