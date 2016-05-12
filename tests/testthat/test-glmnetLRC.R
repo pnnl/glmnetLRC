@@ -380,7 +380,8 @@ test_that("Test the behavior of the predict method", {
 
   # But we only have 2 missing predictions
   np3 <- predict(gp, tdata)
-  expect_equal(sum(is.na(np3)), 2)
+  expect_equal(sum(is.na(np3$Prob)), 2)
+  expect_equal(sum(is.na(np3$PredictClass)), 2)
 
   # Predictions of non-missing values should be the same
   np4 <- predict(gp, testdata, truthCol = 8, keepCols = 2)

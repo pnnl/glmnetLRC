@@ -650,8 +650,10 @@ coef.glmnetLRC <- function(object, ...) {
 ##'
 ##' @describeIn glmnetLRC Predict (or classify) new data from an \code{glmnetLRC} object.
 ##' Returns an object of class \code{LRCpred} (which inherits
-##' from \code{data.frame}) that contains the predicted class for each observation.  The columns indicated
-##' by \code{truthCol} and \code{keepCols} are included if they were requested.
+##' from \code{data.frame}) that contains the predicted probabilities (\code{Prob}) and class (\code{predictClass})
+##' for each observation.  The \code{Prob} column corresponds to the predicted probability that an observation belongs
+##' to the second level of \code{truthLabels}. The columns indicated by \code{truthCol} and \code{keepCols} are included
+##' if they were requested.
 ##'
 ##' @param newdata A dataframe or matrix containing the new set of observations to
 ##' be predicted, as well as an optional column of true labels.
@@ -735,8 +737,8 @@ predict.glmnetLRC <- function(object,
   if (is.null(selCols)) {
     selCols <- 0
   }
-  output <- cbind(predLabels, Smisc::select(newdata, selCols))
-  colnames(output)[1] <- "PredictClass"
+  output <- cbind(preds, predLabels, Smisc::select(newdata, selCols))
+  colnames(output)[1:2] <- c("Prob", "PredictClass")
 
   # Assign the class if a truth column was provided
   if (!is.null(truthCol)) {

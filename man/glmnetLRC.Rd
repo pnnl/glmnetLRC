@@ -195,8 +195,10 @@ regression coefficients using the optimal values of \eqn{\alpha} and \eqn{\lambd
 
 \item \code{predict}: Predict (or classify) new data from an \code{glmnetLRC} object.
 Returns an object of class \code{LRCpred} (which inherits
-from \code{data.frame}) that contains the predicted class for each observation.  The columns indicated
-by \code{truthCol} and \code{keepCols} are included if they were requested.
+from \code{data.frame}) that contains the predicted probabilities (\code{Prob}) and class (\code{predictClass})
+for each observation.  The \code{Prob} column corresponds to the predicted probability that an observation belongs
+to the second level of \code{truthLabels}. The columns indicated by \code{truthCol} and \code{keepCols} are included
+if they were requested.
 
 \item \code{missingpreds}: Identify the set of predictors in a \code{glmnetLRC} object that are not
 present in \code{newdata}. Returns a character vector of the missing predictor names. If no predictors are missing,
