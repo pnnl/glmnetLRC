@@ -43,6 +43,9 @@ predLoss_glmnetLRC <- function(glmnetFit, newData, truthLabels, lossMat,
                                lossWeight = rep(1, NROW(newData)),
                                lambdaVec = NULL) {
 
+  # Force the lossWeight to resolve to avoid any issues with lazy evaluation
+  force(lossWeight)
+
   # Check inputs
   Smisc::stopifnotMsg(
       
@@ -50,24 +53,23 @@ predLoss_glmnetLRC <- function(glmnetFit, newData, truthLabels, lossMat,
     inherits(glmnetFit, "lognet"), "'glmnetFit' must inherit from the 'lognet' class",
     inherits(glmnetFit, "glmnet"), "'glmnetFit' must inherit from the 'glmnet' class",
 
-    # truthLabels is a factor
-    is.factor(truthLabels), "'truthLabels' must be a factor",
-
-    # Ensure we have a binary response
-    length(levels(truthLabels)) == 2, "'truthLabels' must have 2 levels",
-
-    # Ensure factors were constructed the same way for
-    # the training data and the newdata.  This is important
-    # to ensure our labels don't get messed up
-    all(glmnetFit$classnames == levels(truthLabels)), "Factor levels in 'glmnetFit' object do not match the levels of 'truthLabels'",
-    # tauVec is checked earlier in glmnetLRC()
+    # Check truthLabels
+    if (is.factor(truthLabels)) {
+      nlevels(truthLabels) == 2
+    } else FALSE,
+    "'truthLabels' must be a factor with 2 levels",
 
     # Verify lengths match
-    length(lossWeight) == NROW(newData), "the length of 'lossWeight' must be the same as the number of rows in 'newData'")
+    length(lossWeight) == NROW(newData),
+    "the length of 'lossWeight' must be the same as the number of rows in 'newData'")
 
-  # Force the lossWeight to resolve to avoid any issues with lazy evaluation
-  force(lossWeight)
-
+  # Ensure factors were constructed the same way for
+  # the training data and the newdata.  This is important
+  # to ensure our labels don't get messed up
+  if (!all(glmnetFit$classnames == levels(truthLabels))) {
+    stop("Factor levels in 'glmnetFit' object do not match the levels of 'truthLabels'")
+  }
+  
   # For each lambda, make probabality predictions that the instance is an
   # element of the class with the largest factor level
   preds <- predict(glmnetFit, newData, s = lambdaVec, type = "response")

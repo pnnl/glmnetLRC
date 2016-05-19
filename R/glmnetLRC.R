@@ -740,26 +740,15 @@ predict.glmnetLRC <- function(object,
   output <- cbind(preds, predLabels, Smisc::select(newdata, selCols))
   colnames(output)[1:2] <- c("Prob", "PredictClass")
 
-  # Assign the class if a truth column was provided
-  if (!is.null(truthCol)) {
+  # Assign the class and attributes
+  class(output) <- c("LRCpred", class(output))
 
-    class(output) <- c("LRCpred", class(output))
+  attributes(output) <- c(attributes(output),
+                          list(modelType = "glmnet",
+                               truthCol = truthCol,
+                               optimalParms = object$optimalParms,
+                               classNames = glmnetObject$classnames))
 
-    attributes(output) <- c(attributes(output),
-                            list(modelType = "glmnet",
-                                 truthCol = truthCol,
-                                 optimalParms = object$optimalParms,
-                                 classNames = glmnetObject$classnames))
-
-
-  }
-
-  else {
-    attributes(output) <- c(attributes(output),
-                            list(modelType = "glmnet",
-                                 optimalParms = object$optimalParms,
-                                 classNames = glmnetObject$classnames))
-  }
 
   return(output)
 

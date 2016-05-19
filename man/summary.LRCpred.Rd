@@ -2,7 +2,7 @@
 % Please edit documentation in R/summary.LRCpred.R
 \name{summary.LRCpred}
 \alias{summary.LRCpred}
-\title{Calculate performance metrics of logistic regression classifiers}
+\title{Summarize predictions of logistic regression classifier}
 \usage{
 \method{summary}{LRCpred}(object, ...)
 }
@@ -10,25 +10,28 @@
 \item{object}{an object of class \code{LRCpred} returned by
 \code{\link{predict.glmnetLRC}}.}
 
-\item{\dots}{Ignored}
+\item{\dots}{Arguments passed to \code{\link{print}} methods}
 }
 \value{
+Prints and invisibly returns the following information:
 \itemize{
+
 \item If \code{truthCol} was provided in the call to
-\code{\link{predict.glmnetLRC}}, a
-\code{data.frame} is returned with the sensitivity, specificity, false negative rate,
+\code{\link{predict.glmnetLRC}}, the sensitivity, specificity, false negative rate,
 false positive rate, and accuracy for the class designated by the second level of
 the \code{truthLabels} argument
-in \code{\link{glmnetLRC}}.
+in \code{\link{glmnetLRC}} are calculated.  A summary of the predicted probabilities, according to the true class, is
+also provided.
 
-\item If \code{truthCol = NULL} in the call to
-\code{\link{predict.glmnetLRC}}
-a tabulation of the number of predictions for each class is returned.
+\item If \code{truthCol = NULL} in the call to \code{\link{predict.glmnetLRC}}
+a tabulation of the number of predictions for each class is shown, along with a summary of the probabilities according
+to each predicted class.
 }
 }
 \description{
-Calculate accuracy, sensitivity, specificity, false positive rate, and false
-negative rate for predictions from logistic regression classifiers
+Summarize the predicted probabilities of the classifier, and, if possible,
+calculate accuracy, sensitivity, specificity, false positive rate, and false
+negative rate.
 }
 \author{
 Landon Sego
