@@ -198,7 +198,7 @@ Returns an object of class \code{LRCpred} (which inherits
 from \code{data.frame}) that contains the predicted probabilities (\code{Prob}) and class (\code{predictClass})
 for each observation.  The \code{Prob} column corresponds to the predicted probability that an observation belongs
 to the second level of \code{truthLabels}. The columns indicated by \code{truthCol} and \code{keepCols} are included
-if they were requested.
+if they were requested.  The \code{LRCpred} class has two methods:  \code{\link{summary.LRCpred}} and \code{\link{plot.LRCpred}}.
 
 \item \code{missingpreds}: Identify the set of predictors in a \code{glmnetLRC} object that are not
 present in \code{newdata}. Returns a character vector of the missing predictor names. If no predictors are missing,
@@ -271,6 +271,9 @@ head(new)
 
 # Now summarize the performance of the model
 summary(new)
+
+# And plot the probability predictions of the model
+plot(new, scale = 0.5, legendArgs = list(x = "topright"))
 
 # If predictions are made without an indication of the ground truth,
 # the summary is necessarily simpler:

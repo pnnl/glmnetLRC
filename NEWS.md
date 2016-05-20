@@ -1,10 +1,10 @@
-Version 0.1.5, 2016-05-17
+Version 0.1.5, 2016-05-20
 -----------------------------------------------------------------------------------
 
 FEATURES / CHANGES
 
-- In `summary.LRCpred()`: Included summary of predicted probabilities, invisibily return summary objects
 - Added `plot.LRCpred()` to plot the predicted probabilites of the LRC
+- In `summary.LRCpred()`: Included summary of predicted probabilities, invisibily return summary objects
 - Tightened up the argument checking of `predLoss_glmnetLRC()`
 
 
