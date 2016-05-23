@@ -71,7 +71,7 @@ test_that("calcLoss() remains unchanged from historical result", {
 test_that("Confusion matrix methods from summary() are correct", {
 
   # Check the summary as well
-  stats <- summary(new)
+  stats <- summary(new)$ConfusionMatrixMetrics
 
   # Manually calculate CM metrics
   sensitivity <- with(new, sum((PredictClass == "poor") & (Curated_Quality == "poor")) / sum(Curated_Quality == "poor"))
@@ -92,10 +92,10 @@ test_that("Counting from summary() remains unchanged from historical result", {
   new1 <- predict(glmnetLRC_fit, testdata)
 
   # Remove blank spaces in the summary
-  out <- gsub(" ", "", summary(new1))
+  out <- summary(new1)$PredClassSummary
 
   # Tests
-  expect_equal(out[1, 2], "good:35")
-  expect_equal(out[2, 2], "poor:64")
+  expect_equal(out[[1]], 35)
+  expect_equal(out[[2]], 64)
     
 })

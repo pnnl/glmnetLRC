@@ -15,17 +15,18 @@
 \code{truthCol} was not specified in the call to \code{\link{predict.glmnetLRC}}, only the first element is used. This is passed to
 \code{\link{plot}}.}
 
-\item{col}{A vector of at most length 2 indicating the colors of the plotted points in order to differentiate the two true classes.  If
-\code{truthCol} was not specified in the call to \code{\link{predict.glmnetLRC}}, only the first element is used. This is passed to
-\code{\link{plot}}.}
+\item{col}{A vector of at most length 2 indicating the colors of the plotted points in order to differentiate the two true classes.
+If \code{truthCol} was not specified in the call to \code{\link{predict.glmnetLRC}}, only the first element is used. This is
+passed to \code{\link{plot}}.}
 
 \item{scale}{A numeric value in (0, 1] that controls scaling of the horizontal axis.  A value of 1 corresponds to the standard,
-linear scale.  Values closer to 0 symetrically 'zoom-in' the axis near 0 and 1 while 'zooming-out' the axis in the neighborhood of 0.5.
-Values of \code{scale} closer to 0 are useful if most of the probability predictions are piled up near 0 and 1.}
+linear scale.  Values closer to 0 symetrically 'zoom-in' the axis near 0 and 1 while 'zooming-out' the axis in the neighborhood
+of 0.5. Values of \code{scale} closer to 0 are useful if most of the probability predictions are piled up near 0 and 1.}
 
 \item{seed}{Single numeric value that sets the seed for the random jitter of the vertical axis of the plot.}
 
-\item{parArgs}{If desired, a list of named arguments that will be passed to \code{\link{par}} which is called prior to making the plot.}
+\item{parArgs}{If desired, a list of named arguments that will be passed to \code{\link{par}} which is called prior to making
+the plot.}
 
 \item{legendArgs}{If desired, a list of named arguments that will be passed to \code{\link{legend}}. If
 \code{truthCol} was not specified in the call to \code{\link{predict.glmnetLRC}}, no legend is drawn.}

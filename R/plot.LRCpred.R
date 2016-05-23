@@ -10,17 +10,18 @@
 ##' \code{truthCol} was not specified in the call to \code{\link{predict.glmnetLRC}}, only the first element is used. This is passed to
 ##' \code{\link{plot}}.
 ##'
-##' @param col A vector of at most length 2 indicating the colors of the plotted points in order to differentiate the two true classes.  If
-##' \code{truthCol} was not specified in the call to \code{\link{predict.glmnetLRC}}, only the first element is used. This is passed to
-##' \code{\link{plot}}.
+##' @param col A vector of at most length 2 indicating the colors of the plotted points in order to differentiate the two true classes.
+##' If \code{truthCol} was not specified in the call to \code{\link{predict.glmnetLRC}}, only the first element is used. This is
+##' passed to \code{\link{plot}}.
 ##'
 ##' @param scale A numeric value in (0, 1] that controls scaling of the horizontal axis.  A value of 1 corresponds to the standard,
-##' linear scale.  Values closer to 0 symetrically 'zoom-in' the axis near 0 and 1 while 'zooming-out' the axis in the neighborhood of 0.5.
-##' Values of \code{scale} closer to 0 are useful if most of the probability predictions are piled up near 0 and 1.
+##' linear scale.  Values closer to 0 symetrically 'zoom-in' the axis near 0 and 1 while 'zooming-out' the axis in the neighborhood
+##' of 0.5. Values of \code{scale} closer to 0 are useful if most of the probability predictions are piled up near 0 and 1.
 ##'
 ##' @param seed Single numeric value that sets the seed for the random jitter of the vertical axis of the plot.
 ##'
-##' @param parArgs If desired, a list of named arguments that will be passed to \code{\link{par}} which is called prior to making the plot.
+##' @param parArgs If desired, a list of named arguments that will be passed to \code{\link{par}} which is called prior to making
+##' the plot.
 ##'
 ##' @param legendArgs If desired, a list of named arguments that will be passed to \code{\link{legend}}. If
 ##' \code{truthCol} was not specified in the call to \code{\link{predict.glmnetLRC}}, no legend is drawn.
@@ -44,51 +45,51 @@ plot.LRCpred <- function(x, pch = c(1, 2), col = c("Blue", "Red"), scale = 1, se
                          parArgs = NULL, legendArgs = NULL, lineArgs = NULL, textArgs = NULL, ...) {
 
   # Check arguments
-  Smisc::stopifnotMsg(# pch
-                      (length(pch) > 0) & (length(pch) <= 2),
-                      "'pch' must be of length 1 or 2",
+  Smisc::stopifnotMsg(
+    # pch
+    (length(pch) > 0) & (length(pch) <= 2),
+    "'pch' must be of length 1 or 2",
 
-                      # col
-                      (length(col) > 0) & (length(col) <= 2),
-                      "'col' must be of length 1 or 2",
+    # col
+    (length(col) > 0) & (length(col) <= 2),
+    "'col' must be of length 1 or 2",
 
-                      # scale
-                      if (is.numeric(scale) & (length(scale) == 1)) {
-                        (scale > 0) & (scale <= 1)
-                      } else FALSE,
-                      "'scale' must be a single numeric value in (0, 1]",
+    # scale
+    if (is.numeric(scale) & (length(scale) == 1)) {
+      (scale > 0) & (scale <= 1)
+    } else FALSE,
+    "'scale' must be a single numeric value in (0, 1]",
 
-                      # seed
-                      is.numeric(seed) & (length(seed) == 1),
-                      "'seed' must be a single numeric value",
+    # seed
+    is.numeric(seed) & (length(seed) == 1),
+    "'seed' must be a single numeric value",
 
-                      # parArgs
-                      if (!is.null(parArgs)) {
-                        if (is.list(parArgs)) {
-                          all(names(parArgs) %in% listParNames())
-                        } else FALSE
-                      } else TRUE,
-                      "'parArgs' must be NULL or a list whose names match the arguments of 'par()'",
+    # parArgs
+    if (!is.null(parArgs)) {
+      is.list(parArgs)
+    } else TRUE,
+    "'parArgs' must be NULL or a list whose names match the arguments of 'par()'",
 
-                      # legendArgs
-                      if (!is.null(legendArgs)) {
-                        if (is.list(legendArgs)) {
-                          all(names(legendArgs) %in% names(formals(legend)))
-                        } else FALSE
-                      } else TRUE,
-                      "'legendArgs' must be NULL or a list whose names match the arguments of 'legend()'",
+    # legendArgs
+    if (!is.null(legendArgs)) {
+      if (is.list(legendArgs)) {
+        all(names(legendArgs) %in% names(formals(legend)))
+      } else FALSE
+    } else TRUE,
+    "'legendArgs' must be NULL or a list whose names match the arguments of 'legend()'",
 
-                      # lineArgs
-                      if (!is.null(lineArgs)) {
-                        is.list(lineArgs)
-                      } else TRUE,
-                      "'lineArgs' must be NULL or a list of named values that can be passed to 'abline()'",
+    # lineArgs
+    if (!is.null(lineArgs)) {
+      is.list(lineArgs)
+    } else TRUE,
+    "'lineArgs' must be NULL or a list of named values that can be passed to 'abline()'",
                       
-                      # textArgs
-                      if (!is.null(textArgs)) {
-                        is.list(textArgs)
-                      } else TRUE,
-                      "'textArgs' must be NULL or a list of named values that can be passed to 'text()'")
+    # textArgs
+    if (!is.null(textArgs)) {
+      is.list(textArgs)
+    } else TRUE,
+    "'textArgs' must be NULL or a list of named values that can be passed to 'text()'"
+  )
                       
     
   # Get the truth column
@@ -167,7 +168,7 @@ plot.LRCpred <- function(x, pch = c(1, 2), col = c("Blue", "Red"), scale = 1, se
   }
   else {
     ylab <- "Random jitter"
-q  }
+  }
   
   # Set ylab to "" so we don't write anything there
   finalPlotArgs$ylab <- ""
@@ -245,20 +246,6 @@ q  }
   par(op)
   
 } # plot.LRCpred
-
-# These are tested in "tests/testthat/test-listParNames.R"
-listParNames <- function() {
-    
-  c("xlog", "ylog", "adj", "ann", "ask", "bg", "bty", "cex", "cex.axis", "cex.lab",
-    "cex.main", "cex.sub", "cin", "col", "col.axis", "col.lab", "col.main", "col.sub",
-    "cra", "crt", "csi", "cxy", "din", "err", "family", "fg", "fig", "fin", "font",
-    "font.axis", "font.lab", "font.main", "font.sub", "lab", "las", "lend", "lheight",
-    "ljoin", "lmitre", "lty", "lwd", "mai", "mar", "mex", "mfcol", "mfg", "mfrow", "mgp",
-    "mkh", "new", "oma", "omd", "omi", "page", "pch", "pin", "plt", "ps", "pty", "smo", "srt",
-    "tck", "tcl", "usr", "xaxp", "xaxs", "xaxt", "xpd", "yaxp", "yaxs", "yaxt", "ylbias")
-  
-}
-
 
 # Create the union of the defaultArgs and the supplied args, ..., but supplied args get preference
 # if there are two of the same name

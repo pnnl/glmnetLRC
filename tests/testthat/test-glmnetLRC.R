@@ -1,5 +1,7 @@
 context("Verify glmnetLRC() and associated methods perform correctly")
 
+saveComparitors <- FALSE
+
 # Set the seed
 set.seed(20)
 
@@ -271,7 +273,10 @@ test_that("Objects returned by glmnetLRC() remains unchanged", {
                   lossMat = lM, nJobs = 2, masterSeed = 6,
                   estimateLoss = TRUE)
 
-#  save(gp, file = "../datasets/gp.Rdata")
+  if (saveComparitors) {
+    save(gp, file = "../datasets/gp.Rdata")
+  }
+  
   gp.c <- Smisc::loadObject("../datasets/gp.Rdata")
 
   # Tests
@@ -293,7 +298,9 @@ test_that("Objects returned by glmnetLRC() remains unchanged", {
                    tauVec = c(0.3, 0.7), cvReps = 2,
                    nJobs = 2, masterSeed = 4, stratify = TRUE)
 
-#  save(gp1, file = "../datasets/gp1.Rdata")
+  if (saveComparitors) {  
+   save(gp1, file = "../datasets/gp1.Rdata")
+  }
   gp1.c <- Smisc::loadObject("../datasets/gp1.Rdata")
 
   # Tests

@@ -8,30 +8,31 @@
 ##' 
 ##' @method summary LRCpred
 ##'
-##' @param object an object of class \code{LRCpred} returned by
+##' @param object An object of class \code{LRCpred} returned by
 ##' \code{\link{predict.glmnetLRC}}.
 ##'
-##' @param \dots Arguments passed to \code{\link{print}} methods
+##' @param \dots Arguments passed to \code{\link{print}} methods. Ignored by the \code{summary} method.
 ##'
-##' @return Prints and invisibly returns the following information:
-##' \itemize{
-##' 
-##' \item If \code{truthCol} was provided in the call to
-##' \code{\link{predict.glmnetLRC}}, the sensitivity, specificity, false negative rate,
+##' @return Returns a \code{summaryLRCpred} object.  If \code{truthCol} was provided in the call to
+##' \code{\link{predict.glmnetLRC}}, the result is a list with the following elements:
+##'
+##' \describe{
+##' \item{ConfusionMatrixMetrics}{A matrix with the sensitivity, specificity, false negative rate,
 ##' false positive rate, and accuracy for the class designated by the second level of
-##' the \code{truthLabels} argument
-##' in \code{\link{glmnetLRC}} are calculated.  A summary of the predicted probabilities, according to the true class, is
-##' also provided.
+##' the \code{truthLabels} argument provided to \code{\link{glmnetLRC}}}
+##' \item{PredProbSummary}{A numeric summary of the predicted probabilities, according to the true class}
+##' }
 ##'
-##' \item If \code{truthCol = NULL} in the call to \code{\link{predict.glmnetLRC}}
-##' a tabulation of the number of predictions for each class is shown, along with a summary of the probabilities according
-##' to each predicted class.
+##' If \code{truthCol} was not provided in the call to \code{\link{predict.glmnetLRC}}, the result is a list with
+##' the following elements:
+##' \describe{
+##' \item{PredClassSummary}{A tabulation of the number of predictions in each class}
+##' \item{PredProbSummary}{A numeric summary of the predicted probabilities, according to the predicted class}
 ##' }
 ##'
 ##' @export
 ##'
-##' @seealso See \code{\link{glmnetLRC}} and \code{\link{glmnetLRC_fit}}
-##' for examples.
+##' @seealso See \code{\link{glmnetLRC}} for examples.
 
 summary.LRCpred <- function(object, ...) {
 
@@ -46,16 +47,9 @@ summary.LRCpred <- function(object, ...) {
     PredictedClass <- object$PredictClass
     PredProbSummary <- by(object$Prob, PredictedClass, summary)
 
-    cat("Counts of predicted classes:\n\n")
-    print(PredClassSummary, ...)
+    out <- list(PredClassSummary = PredClassSummary,
+                PredProbSummary = PredProbSummary)
 
-
-    cat("\nSummary of predicted probabilities, by predicted class:\n\n")
-    print(PredProbSummary, ...)
-
-    invisible(list(PredClassSummary = PredClassSummary,
-                   PredProbSummary = PredProbSummary))
-    
   }
 
   else {
@@ -81,15 +75,45 @@ summary.LRCpred <- function(object, ...) {
                           object[,"PredictClass"],
                           attributes(object)$classNames[2])
 
-    cat("Logistic regression classification performance:\n\n")
-    print(summ_out, ...)
-
-    cat("\nSummary of predicted probabilities, by true class:\n\n")
-    print(PredProbSummary, ...)
-
-    invisible(list(ConfusionMatrixMetrics = summ_out,
-                   PredProbSummary = PredProbSummary))
+    out <- list(ConfusionMatrixMetrics = summ_out,
+                PredProbSummary = PredProbSummary)
 
   } # else
+
+  class(out) <- c("summaryLRCpred", class(out))
+
+  return(out)
   
 } # end summary.LRCpred
+
+
+##' @method print summaryLRCpred
+##'
+##' @describeIn summary.LRCpred Prints a \code{summaryLRCpred} object in a readable format.
+##'
+##' @param x An object of class \code{summaryLRCpred}.
+##'
+##' @export
+
+print.summaryLRCpred <- function(x, ...) {
+
+  if ("ConfusionMatrixMetrics" %in% names(x)) {
+
+    cat("Logistic regression classification performance:\n\n")
+    print(x$ConfusionMatrixMetrics, ...)
+
+    cat("\nSummary of predicted probabilities, by true class:\n\n")
+    print(x$PredProbSummary, ...)
+      
+  }
+  else {
+      
+    cat("Counts of predicted classes:\n\n")
+    print(x$PredClassSummary, ...)
+
+    cat("\nSummary of predicted probabilities, by predicted class:\n\n")
+    print(x$PredProbSummary, ...)
+
+  }
+    
+}
