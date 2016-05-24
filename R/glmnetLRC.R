@@ -209,6 +209,9 @@
 ##' # Now summarize the performance of the model
 ##' summary(new)
 ##'
+##' # And plot the probability predictions of the model
+##' plot(new, scale = 0.5, legendArgs = list(x = "topright"))
+##'
 ##' # If predictions are made without an indication of the ground truth,
 ##' # the summary is necessarily simpler:
 ##' summary(predict(glmnetLRC_fit, testdata))
@@ -653,7 +656,7 @@ coef.glmnetLRC <- function(object, ...) {
 ##' from \code{data.frame}) that contains the predicted probabilities (\code{Prob}) and class (\code{predictClass})
 ##' for each observation.  The \code{Prob} column corresponds to the predicted probability that an observation belongs
 ##' to the second level of \code{truthLabels}. The columns indicated by \code{truthCol} and \code{keepCols} are included
-##' if they were requested.
+##' if they were requested.  The \code{LRCpred} class has two methods:  \code{\link{summary.LRCpred}} and \code{\link{plot.LRCpred}}.
 ##'
 ##' @param newdata A dataframe or matrix containing the new set of observations to
 ##' be predicted, as well as an optional column of true labels.
@@ -689,9 +692,10 @@ predict.glmnetLRC <- function(object,
     # It needs to be a factor
     newdata[,truthCol] <- as.factor(newdata[,truthCol])
 
-    if (!setequal(levels(newdata[,truthCol]), object$classnames))
+    if (!setequal(levels(newdata[,truthCol]), object$classnames)) {
       warning("The class labels in the 'truthCol' do not match those ",
               "in the 'object'")
+    }
 
   }
 
@@ -740,26 +744,15 @@ predict.glmnetLRC <- function(object,
   output <- cbind(preds, predLabels, Smisc::select(newdata, selCols))
   colnames(output)[1:2] <- c("Prob", "PredictClass")
 
-  # Assign the class if a truth column was provided
-  if (!is.null(truthCol)) {
+  # Assign the class and attributes
+  class(output) <- c("LRCpred", class(output))
 
-    class(output) <- c("LRCpred", class(output))
+  attributes(output) <- c(attributes(output),
+                          list(modelType = "glmnet",
+                               truthCol = truthCol,
+                               optimalParms = object$optimalParms,
+                               classNames = glmnetObject$classnames))
 
-    attributes(output) <- c(attributes(output),
-                            list(modelType = "glmnet",
-                                 truthCol = truthCol,
-                                 optimalParms = object$optimalParms,
-                                 classNames = glmnetObject$classnames))
-
-
-  }
-
-  else {
-    attributes(output) <- c(attributes(output),
-                            list(modelType = "glmnet",
-                                 optimalParms = object$optimalParms,
-                                 classNames = glmnetObject$classnames))
-  }
 
   return(output)
 
