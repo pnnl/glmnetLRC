@@ -24,6 +24,6 @@
 ##' 
 ##' @rdname glmnetLRC-package
 ##'
-##' @importFrom graphics hist pairs par rect
-##' @importFrom stats complete.cases median predict runif sd
+##' @importFrom graphics hist pairs par rect abline axis legend mtext plot text
+##' @importFrom stats complete.cases median predict runif sd pbeta qbeta rnorm
 NULL
