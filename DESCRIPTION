@@ -1,8 +1,8 @@
 Package: glmnetLRC
 Type: Package
 Title: Lasso and Elastic-Net Logistic Regression Classification with an Arbitrary Loss Function
-Version: 0.1.5
-Date: 2016-05-23
+Version: 0.1.6
+Date: 2016-06-17
 Author: Landon H. Sego, Alexander M. Venzin, John A. Ramey
 Maintainer: Landon Sego <Landon.Sego@pnnl.gov>
 URL: https://pnnl.github.io/glmnetLRC

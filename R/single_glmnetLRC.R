@@ -141,7 +141,8 @@ single_glmnetLRC <- function(glmnetArgs,
   # If still tied, larger values of lambda are prefered because they reduce the
   # number of predictors to create a more parsimonous model with fewer predictors
   dfData$sqErrorTau <- (dfData$tau - 0.5)^2
-  gridMinimum <- Smisc::sortDF(dfData, ~ ExpectedLoss + sqErrorTau - lambda)[1,]
+#  gridMinimum <- Smisc::sortDF(dfData, ~ ExpectedLoss + sqErrorTau - lambda)[1,]
+  gridMinimum <- dfData[order(dfData$ExpectedLoss, dfData$sqErrorTau, -dfData$lambda),][1,]
 
   # Return the optimal lambda, tau, and alpha for this particular seed
   return(gridMinimum[,c("alpha", "lambda", "tau", "ExpectedLoss")])
