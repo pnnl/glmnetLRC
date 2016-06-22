@@ -664,10 +664,11 @@ coef.glmnetLRC <- function(object, ...) {
 ##' to fit the elastic-net logistic regression classifier.
 ##'
 ##' @param truthCol The column number or column name in \code{newdata} that contains the
-##' true labels. Optional.
+##' true labels, which should be a factor (and this implies \code{newdata} should be a dataframe if \code{truthCol} is provided).
+##' Optional.
 ##'
 ##' @param keepCols A numeric vector of column numbers (or a character vector of
-##' column names) that will be 'kept' and returned with the predictions. Optional.
+##' column names) in \code{newdata} that will be 'kept' and returned with the predictions. Optional.
 ##'
 ##' @export
 
@@ -690,7 +691,9 @@ predict.glmnetLRC <- function(object,
   if (!is.null(truthCol)) {
 
     # It needs to be a factor
-    newdata[,truthCol] <- as.factor(newdata[,truthCol])
+    if (!is.factor(newdata[,truthCol])) {
+      stop("'truthCol', if provided, needs to be a factor, and, consequently, 'newdata' should be a data frame")
+    }
 
     if (!setequal(levels(newdata[,truthCol]), object$classnames)) {
       warning("The class labels in the 'truthCol' do not match those ",
@@ -741,18 +744,16 @@ predict.glmnetLRC <- function(object,
   if (is.null(selCols)) {
     selCols <- 0
   }
-  output <- cbind(preds, predLabels, Smisc::select(newdata, selCols))
+  output <- cbind(preds, predLabels, as.data.frame(Smisc::select(newdata, selCols)))
   colnames(output)[1:2] <- c("Prob", "PredictClass")
 
   # Assign the class and attributes
   class(output) <- c("LRCpred", class(output))
 
   attributes(output) <- c(attributes(output),
-                          list(modelType = "glmnet",
-                               truthCol = truthCol,
+                          list(truthCol = truthCol,
                                optimalParms = object$optimalParms,
                                classNames = glmnetObject$classnames))
-
 
   return(output)
 

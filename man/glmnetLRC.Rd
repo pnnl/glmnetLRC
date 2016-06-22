@@ -108,10 +108,11 @@ be predicted, as well as an optional column of true labels.
 to fit the elastic-net logistic regression classifier.}
 
 \item{truthCol}{The column number or column name in \code{newdata} that contains the
-true labels. Optional.}
+true labels, which should be a factor (and this implies \code{newdata} should be a dataframe if \code{truthCol} is provided).
+Optional.}
 
 \item{keepCols}{A numeric vector of column numbers (or a character vector of
-column names) that will be 'kept' and returned with the predictions. Optional.}
+column names) in \code{newdata} that will be 'kept' and returned with the predictions. Optional.}
 
 \item{\dots}{For \code{glmnetLRC()}, these are additional arguments to \code{\link{glmnet}} in the \code{glmnet} package.
 Certain arguments of \code{\link{glmnet}} are reserved by the \code{glmnetLRC} package and an error message will make that

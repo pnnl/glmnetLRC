@@ -12,8 +12,8 @@
 ##' \tabular{ll}{
 ##' Package: \tab glmnetLRC\cr
 ##' Type: \tab Package\cr
-##' Version: \tab 0.1.6\cr
-##' Date: \tab 2016-06-17\cr
+##' Version: \tab 0.1.7\cr
+##' Date: \tab 2016-06-22\cr
 ##' License: \tab file LICENSE\cr }
 ##'
 ##' @author Landon Sego, Alex Venzin, John Ramey
