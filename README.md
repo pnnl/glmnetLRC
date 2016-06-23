@@ -28,7 +28,7 @@ from [the PNNL github site](http://github.com/pnnl):
     devtools::install_github("pnnl/Smisc")
     devtools::install_github("pnnl/glmnetLRC")
 
-#### To contribute:
+#### Contributing
 
 We welcome contributions to this package.  Please follow [these steps](http://pnnl.github.io/prepPackage) when contributing.
 
