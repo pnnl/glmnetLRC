@@ -264,6 +264,19 @@ lM <- lossMatrix(c("good","good","poor","poor"),
 
 data(testdata, package = "glmnetLRC")
 
+data(glmnetLRC_fit, package = "glmnetLRC")
+
+
+# Test how predict handles data frames and matrices
+test_that("predict.glmnetLRC() handles data frames and matrices equivalently", {
+
+   o1 <- predict(glmnetLRC_fit, testdata)
+   o2 <- predict(glmnetLRC_fit, as.matrix(testdata[,9:96]))
+
+   expect_identical(o1, o2)
+   expect_identical(summary(o1), summary(o2))
+    
+})
 
 # Create a set of static checks
 test_that("Objects returned by glmnetLRC() remains unchanged", {
@@ -440,3 +453,5 @@ test_that("Seeds make a difference", {
   expect_that(gp, not(equals(gp.c)))
 
 })
+
+
