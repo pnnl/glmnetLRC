@@ -102,7 +102,8 @@ by \code{glmnetLRC()}), which contains the optimally-trained elastic-net logisti
 an object of class \code{glmnetLRC} (returned by \code{glmnetLRC()})
 which contains the optimally-trained elastic-net logistic regression classifier.}
 
-\item{tol}{Coefficients with an absolute value smaller than \code{tol} are not returned.}
+\item{tol}{A small positive number, such that coefficients with an absolute value smaller than
+\code{tol} are not returned.}
 
 \item{newdata}{A dataframe or matrix containing the new set of observations to
 be predicted, as well as an optional column of true labels.

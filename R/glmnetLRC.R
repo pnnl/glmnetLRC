@@ -523,6 +523,10 @@ glmnetLRC <- function(truthLabels, predictors,
 
 print.glmnetLRC <- function(x, verbose = TRUE, ...) {
 
+  # Check verbose
+  Smisc::stopifnotMsg(is.logical(verbose) & (length(verbose) == 1),
+                      "'verbose' must be TRUE or FALSE")
+    
   # Find the index of the optimal lambda in the glmnet object
   indexMatch <- order(abs(x$lambda -
                           x$optimalParms["lambda"]))[1]
@@ -623,7 +627,8 @@ plot.glmnetLRC <- function(x, ...){
 ##' an object of class \code{glmnetLRC} (returned by \code{glmnetLRC()})
 ##' which contains the optimally-trained elastic-net logistic regression classifier.
 ##'
-##' @param tol Coefficients with an absolute value smaller than \code{tol} are not returned.
+##' @param tol A small positive number, such that coefficients with an absolute value smaller than
+##' \code{tol} are not returned.
 ##'
 ##' @export
 
@@ -633,6 +638,14 @@ coef.glmnetLRC <- function(object, tol = 1e-10, ...) {
     stop("Unexpected error.  The 'object' does not inherit from 'glmnet'")
   }
 
+  # Verify tol
+  Smisc::stopifnotMsg(if (is.numeric(tol)) {
+                        if (length(tol) == 1) {
+                          tol > 0
+                        } else FALSE
+                      } else FALSE,
+                      "'tol' should be a small, positive number")
+  
   # Verify the optimal lambda is in there (it should be)
   if (!(object$optimalParms[["lambda"]] %in% object$lambda)) {
     stop("Unexpected error.  The optimal value of lambda was not in 'glmnetLRC_ojbect$lambda'")
@@ -687,6 +700,10 @@ predict.glmnetLRC <- function(object,
     stop("Unexpected error:  Object of class 'glmnetLRC' does not inherit from 'lognet'")
   }
 
+  # Check newdata
+  Smisc::stopifnotMsg(is.matrix(newdata) | is.data.frame(newdata),
+                      "'newdata' must be a matrix or dataframe")
+  
   # Switching from column numbers to column names if necessary
   truthCol <- Smisc::selectElements(truthCol, colnames(newdata))
   keepCols <- Smisc::selectElements(keepCols, colnames(newdata))
@@ -773,6 +790,9 @@ predict.glmnetLRC <- function(object,
 
 missingpreds.glmnetLRC <- function(object, newdata, ...) {
 
+  Smisc::stopifnotMsg(is.matrix(newdata) | is.data.frame(newdata),
+                      "'newdata' must be a matrix or dataframe")
+    
   # Get the predictor names expected by the object
   predictorNames <- object$beta@Dimnames[[1]]
 
