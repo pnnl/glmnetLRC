@@ -1,3 +1,11 @@
+Version 0.1.8, 2016-07-01
+-----------------------------------------------------------------------------------
+
+FEATURES / CHANGES
+
+- `coef.glmnetLRC()` receieves a tolerance argument to avoid selecting coefficients that are very close to 0. 
+
+
 Version 0.1.7, 2016-06-21
 -----------------------------------------------------------------------------------
 

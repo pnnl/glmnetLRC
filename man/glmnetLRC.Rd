@@ -19,7 +19,7 @@ glmnetLRC(truthLabels, predictors, lossMat = "0-1", lossWeight = rep(1,
 
 \method{plot}{glmnetLRC}(x, ...)
 
-\method{coef}{glmnetLRC}(object, ...)
+\method{coef}{glmnetLRC}(object, tol = 1e-10, ...)
 
 \method{predict}{glmnetLRC}(object, newdata, truthCol = NULL,
   keepCols = NULL, ...)
@@ -101,6 +101,9 @@ by \code{glmnetLRC()}), which contains the optimally-trained elastic-net logisti
 \item{object}{For the \code{coef}, \code{predict}, and \code{extract} methods:
 an object of class \code{glmnetLRC} (returned by \code{glmnetLRC()})
 which contains the optimally-trained elastic-net logistic regression classifier.}
+
+\item{tol}{A small positive number, such that coefficients with an absolute value smaller than
+\code{tol} are not returned.}
 
 \item{newdata}{A dataframe or matrix containing the new set of observations to
 be predicted, as well as an optional column of true labels.
