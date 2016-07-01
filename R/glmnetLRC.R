@@ -623,9 +623,11 @@ plot.glmnetLRC <- function(x, ...){
 ##' an object of class \code{glmnetLRC} (returned by \code{glmnetLRC()})
 ##' which contains the optimally-trained elastic-net logistic regression classifier.
 ##'
+##' @param tol Coefficients with an absolute value smaller than \code{tol} are not returned.
+##'
 ##' @export
 
-coef.glmnetLRC <- function(object, ...) {
+coef.glmnetLRC <- function(object, tol = 1e-10, ...) {
 
   if (!inherits(object, "glmnet")) {
     stop("Unexpected error.  The 'object' does not inherit from 'glmnet'")
@@ -642,7 +644,9 @@ coef.glmnetLRC <- function(object, ...) {
                              type = "coefficients"))
 
   # Remove the 0's
-  return(coefs[coefs[,1] != 0,])
+  zeroCoefs <- abs(coefs[,1]) < tol
+  
+  return(coefs[!zeroCoefs,])
 
 } # coef.glmnetLRC
 
